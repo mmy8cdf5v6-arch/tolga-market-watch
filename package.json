@@ -1,0 +1,14 @@
+{
+  "name": "piyasa-terminali",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Koyu temalı hisse/ETF izleme, AI Radar ve Dünya Raporu uygulaması.",
+  "scripts": {
+    "dev": "vercel dev",
+    "start": "vercel dev",
+    "check": "node --check api/report.js && node --check api/scheduled-report.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

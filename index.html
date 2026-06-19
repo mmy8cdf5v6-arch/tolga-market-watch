@@ -1,0 +1,2232 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0d1117">
+  <title>Piyasa Terminali</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0d1117;
+      --panel: #151a21;
+      --panel-2: #1b222b;
+      --panel-3: #202832;
+      --line: #2d3642;
+      --line-soft: #24303b;
+      --text: #eef3f7;
+      --muted: #9daab6;
+      --muted-2: #748291;
+      --cyan: #3ddbd9;
+      --green: #52d273;
+      --red: #ff6961;
+      --amber: #ffc857;
+      --steel: #86a8c7;
+      --shadow: 0 18px 50px rgba(0, 0, 0, 0.26);
+      --radius: 8px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      min-height: 100%;
+      background: var(--bg);
+    }
+
+    body {
+      min-height: 100%;
+      margin: 0;
+      background:
+        linear-gradient(180deg, rgba(61, 219, 217, 0.07) 0, rgba(13, 17, 23, 0) 230px),
+        var(--bg);
+      color: var(--text);
+      letter-spacing: 0;
+    }
+
+    button,
+    input,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    button:disabled,
+    input:disabled,
+    textarea:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    a {
+      color: var(--cyan);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .app-shell {
+      width: min(1440px, 100%);
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .app-header {
+      display: grid;
+      grid-template-columns: minmax(230px, 1fr) auto;
+      gap: 18px;
+      align-items: center;
+      padding: 18px 0 22px;
+    }
+
+    .brand {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      min-width: 0;
+    }
+
+    .brand-mark {
+      display: grid;
+      width: 42px;
+      height: 42px;
+      place-items: center;
+      border: 1px solid rgba(61, 219, 217, 0.45);
+      border-radius: var(--radius);
+      color: var(--cyan);
+      background: #101923;
+      font-weight: 800;
+      box-shadow: inset 0 0 18px rgba(61, 219, 217, 0.08);
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 1.2rem;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+
+    .version {
+      display: inline-flex;
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 0.78rem;
+    }
+
+    .tabbar {
+      display: flex;
+      gap: 8px;
+      padding: 6px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(21, 26, 33, 0.86);
+      box-shadow: var(--shadow);
+    }
+
+    .tab-btn,
+    .btn,
+    .icon-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel-2);
+      color: var(--text);
+      cursor: pointer;
+      transition: border-color 0.16s ease, background 0.16s ease, transform 0.16s ease;
+      white-space: nowrap;
+    }
+
+    .tab-btn {
+      padding: 0 14px;
+      min-width: 148px;
+      color: var(--muted);
+    }
+
+    .tab-btn.is-active {
+      color: var(--text);
+      border-color: rgba(61, 219, 217, 0.55);
+      background: #102229;
+    }
+
+    .btn {
+      padding: 0 14px;
+      font-weight: 700;
+    }
+
+    .btn.primary {
+      border-color: rgba(61, 219, 217, 0.65);
+      background: #113139;
+      color: #eaffff;
+    }
+
+    .btn.ghost {
+      background: transparent;
+      color: var(--muted);
+    }
+
+    .btn.warn {
+      border-color: rgba(255, 200, 87, 0.5);
+      color: #fff4d4;
+      background: rgba(255, 200, 87, 0.09);
+    }
+
+    .icon-btn {
+      width: 40px;
+      height: 40px;
+      min-height: 40px;
+      padding: 0;
+      flex: 0 0 auto;
+    }
+
+    .tab-btn:hover,
+    .btn:hover,
+    .icon-btn:hover {
+      border-color: var(--steel);
+      transform: translateY(-1px);
+    }
+
+    .tab-btn svg,
+    .btn svg,
+    .icon-btn svg,
+    .fallback-icon {
+      width: 17px;
+      height: 17px;
+      stroke-width: 2;
+    }
+
+    .fallback-icon {
+      display: inline-grid;
+      place-items: center;
+      font-style: normal;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .tab-panel {
+      display: none;
+    }
+
+    .tab-panel.is-active {
+      display: block;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 14px;
+    }
+
+    .section-head h2 {
+      margin: 0;
+      font-size: 1.05rem;
+      letter-spacing: 0;
+    }
+
+    .section-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .terminal-grid,
+    .radar-grid,
+    .report-grid {
+      display: grid;
+      gap: 14px;
+    }
+
+    .terminal-grid {
+      grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);
+      align-items: start;
+    }
+
+    .radar-grid {
+      grid-template-columns: minmax(0, 1fr) minmax(290px, 360px);
+      align-items: start;
+    }
+
+    .report-grid {
+      grid-template-columns: minmax(0, 1fr) minmax(280px, 350px);
+      align-items: start;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(21, 26, 33, 0.92);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-pad {
+      padding: 14px;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      padding: 14px;
+      border-bottom: 1px solid var(--line-soft);
+      background: rgba(27, 34, 43, 0.58);
+    }
+
+    .input,
+    .textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #0f141b;
+      color: var(--text);
+      outline: none;
+    }
+
+    .input {
+      height: 42px;
+      padding: 0 12px;
+    }
+
+    .textarea {
+      min-height: 142px;
+      resize: vertical;
+      padding: 12px;
+      line-height: 1.45;
+    }
+
+    .input:focus,
+    .textarea:focus {
+      border-color: var(--cyan);
+      box-shadow: 0 0 0 3px rgba(61, 219, 217, 0.12);
+    }
+
+    .field {
+      display: grid;
+      gap: 7px;
+      margin-bottom: 12px;
+    }
+
+    .field label,
+    .mini-label {
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .symbol-input {
+      max-width: 180px;
+      text-transform: uppercase;
+    }
+
+    .status-strip {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line-soft);
+    }
+
+    .chip,
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 28px;
+      padding: 0 9px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--muted);
+      background: rgba(32, 40, 50, 0.75);
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    .chip.good,
+    .tag.opportunity {
+      color: #ddffe5;
+      border-color: rgba(82, 210, 115, 0.45);
+      background: rgba(82, 210, 115, 0.1);
+    }
+
+    .chip.bad,
+    .tag.risk {
+      color: #ffe6e4;
+      border-color: rgba(255, 105, 97, 0.45);
+      background: rgba(255, 105, 97, 0.1);
+    }
+
+    .chip.warn,
+    .tag.neutral {
+      color: #fff3cf;
+      border-color: rgba(255, 200, 87, 0.45);
+      background: rgba(255, 200, 87, 0.1);
+    }
+
+    .watch-head,
+    .watch-row {
+      display: grid;
+      grid-template-columns: 44px minmax(92px, 1.05fr) minmax(100px, 0.95fr) minmax(90px, 0.85fr) minmax(98px, 0.9fr) minmax(116px, 1fr) 126px;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .watch-head {
+      padding: 10px 14px;
+      color: var(--muted-2);
+      font-size: 0.72rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--line-soft);
+      background: #111821;
+    }
+
+    .watch-row {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line-soft);
+      min-height: 70px;
+      background: rgba(21, 26, 33, 0.72);
+    }
+
+    .watch-row:last-child {
+      border-bottom: 0;
+    }
+
+    .watch-row.dragging,
+    .watch-row.is-over {
+      background: rgba(61, 219, 217, 0.08);
+      outline: 1px solid rgba(61, 219, 217, 0.45);
+      outline-offset: -1px;
+    }
+
+    .drag-handle {
+      touch-action: none;
+      cursor: grab;
+    }
+
+    .symbol-cell strong {
+      display: block;
+      font-size: 1rem;
+      letter-spacing: 0;
+    }
+
+    .symbol-cell span,
+    .metric-label,
+    .cell-note {
+      color: var(--muted-2);
+      font-size: 0.75rem;
+    }
+
+    .metric {
+      display: grid;
+      gap: 3px;
+      min-width: 0;
+    }
+
+    .metric-value {
+      overflow: hidden;
+      color: var(--text);
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .metric-label {
+      display: none;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .change {
+      font-weight: 800;
+    }
+
+    .positive {
+      color: var(--green);
+    }
+
+    .negative {
+      color: var(--red);
+    }
+
+    .actions {
+      display: flex;
+      gap: 6px;
+      justify-content: flex-end;
+      min-width: 0;
+    }
+
+    .settings-section {
+      border-top: 1px solid var(--line-soft);
+      padding-top: 14px;
+      margin-top: 14px;
+    }
+
+    .settings-section:first-child {
+      border-top: 0;
+      padding-top: 0;
+      margin-top: 0;
+    }
+
+    .settings-section h3,
+    .radar-side h3,
+    .report-side h3 {
+      margin: 0 0 12px;
+      font-size: 0.9rem;
+      letter-spacing: 0;
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .user-line {
+      min-height: 24px;
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 0.85rem;
+      word-break: break-word;
+    }
+
+    .empty-state {
+      padding: 28px 14px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .radar-list {
+      display: grid;
+      gap: 10px;
+      padding: 14px;
+    }
+
+    .radar-row {
+      display: grid;
+      grid-template-columns: minmax(82px, 0.65fr) minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      padding: 12px;
+      border: 1px solid var(--line-soft);
+      border-radius: var(--radius);
+      background: #111821;
+    }
+
+    .score-ring {
+      display: grid;
+      width: 58px;
+      height: 58px;
+      place-items: center;
+      border: 1px solid rgba(61, 219, 217, 0.42);
+      border-radius: 50%;
+      color: var(--cyan);
+      background: rgba(61, 219, 217, 0.08);
+      font-size: 1rem;
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .radar-symbol {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .radar-symbol strong {
+      font-size: 1rem;
+    }
+
+    .reason-list {
+      margin: 6px 0 0;
+      padding: 0;
+      list-style: none;
+      color: var(--muted);
+      font-size: 0.85rem;
+      line-height: 1.45;
+    }
+
+    .reason-list li + li {
+      margin-top: 3px;
+    }
+
+    .headline-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+      font-size: 0.78rem;
+    }
+
+    .radar-side .chip {
+      margin-bottom: 8px;
+    }
+
+    .switch-line {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 12px 0;
+      color: var(--muted);
+    }
+
+    .switch-line input {
+      width: 20px;
+      height: 20px;
+      accent-color: var(--cyan);
+    }
+
+    .report-card {
+      padding: 20px;
+    }
+
+    .report-title {
+      margin: 0 0 8px;
+      font-size: clamp(1.4rem, 3vw, 2rem);
+      line-height: 1.15;
+      letter-spacing: 0;
+    }
+
+    .report-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+
+    .report-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 0 0 18px;
+    }
+
+    .report-section {
+      padding: 18px 0;
+      border-top: 1px solid var(--line-soft);
+    }
+
+    .report-section h3 {
+      margin: 0 0 10px;
+      color: #f7fbff;
+      font-size: 1rem;
+      letter-spacing: 0;
+    }
+
+    .report-section p {
+      margin: 0;
+      color: #dce5ee;
+      line-height: 1.68;
+    }
+
+    .report-section p + p {
+      margin-top: 10px;
+    }
+
+    .sources {
+      display: grid;
+      gap: 8px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .sources li {
+      padding: 10px;
+      border: 1px solid var(--line-soft);
+      border-radius: var(--radius);
+      background: #111821;
+      font-size: 0.84rem;
+      line-height: 1.4;
+    }
+
+    .source-meta {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted-2);
+      font-size: 0.74rem;
+    }
+
+    .loading-line {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+    }
+
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(61, 219, 217, 0.18);
+      border-top-color: var(--cyan);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .toast-zone {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 30;
+      display: grid;
+      gap: 8px;
+      width: min(360px, calc(100vw - 36px));
+    }
+
+    .toast {
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #111821;
+      color: var(--text);
+      box-shadow: var(--shadow);
+      font-size: 0.9rem;
+    }
+
+    .toast.good {
+      border-color: rgba(82, 210, 115, 0.45);
+    }
+
+    .toast.bad {
+      border-color: rgba(255, 105, 97, 0.45);
+    }
+
+    .toast.warn {
+      border-color: rgba(255, 200, 87, 0.45);
+    }
+
+    .print-only {
+      display: none;
+    }
+
+    @media (max-width: 980px) {
+      .app-shell {
+        padding: 14px;
+      }
+
+      .app-header,
+      .terminal-grid,
+      .radar-grid,
+      .report-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .tabbar {
+        overflow-x: auto;
+        justify-content: flex-start;
+      }
+
+      .tab-btn {
+        min-width: 132px;
+        flex: 0 0 auto;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .section-head {
+        display: grid;
+      }
+
+      .section-actions {
+        justify-content: stretch;
+      }
+
+      .section-actions .btn {
+        flex: 1 1 160px;
+      }
+
+      .toolbar {
+        align-items: stretch;
+      }
+
+      .toolbar .input,
+      .toolbar .btn {
+        flex: 1 1 100%;
+        max-width: none;
+      }
+
+      .watch-head {
+        display: none;
+      }
+
+      .watch-row {
+        grid-template-columns: 40px minmax(0, 1fr) auto;
+        gap: 10px;
+        align-items: start;
+      }
+
+      .watch-row .symbol-cell {
+        grid-column: 2;
+      }
+
+      .watch-row .metric {
+        grid-column: 2 / -1;
+        grid-template-columns: minmax(92px, 0.6fr) minmax(0, 1fr);
+        align-items: center;
+      }
+
+      .metric-label {
+        display: block;
+      }
+
+      .watch-row .actions {
+        grid-column: 3;
+        grid-row: 1 / span 2;
+        display: grid;
+        grid-template-columns: 40px 40px;
+      }
+
+      .radar-row {
+        grid-template-columns: 1fr;
+      }
+
+      .radar-symbol {
+        justify-content: space-between;
+      }
+
+      .score-ring {
+        width: 52px;
+        height: 52px;
+      }
+    }
+
+    @media (max-width: 460px) {
+      .app-shell {
+        padding: 10px;
+      }
+
+      .brand h1 {
+        font-size: 1rem;
+      }
+
+      .tab-btn {
+        min-width: 118px;
+        padding: 0 10px;
+      }
+
+      .panel-pad,
+      .report-card {
+        padding: 12px;
+      }
+    }
+
+    @media print {
+      body {
+        background: #fff;
+        color: #111;
+      }
+
+      .app-header,
+      .section-head,
+      .report-side,
+      .toast-zone,
+      .panel:not(.print-area) {
+        display: none !important;
+      }
+
+      .app-shell,
+      .report-grid {
+        display: block;
+        width: 100%;
+        padding: 0;
+        margin: 0;
+      }
+
+      .print-area {
+        border: 0;
+        box-shadow: none;
+        background: #fff;
+      }
+
+      .report-card,
+      .report-section p,
+      .source-meta {
+        color: #111;
+      }
+
+      a {
+        color: #111;
+        text-decoration: underline;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">PT</div>
+        <div>
+          <h1>Piyasa Terminali</h1>
+          <span class="version">Sürüm 1.0.0</span>
+        </div>
+      </div>
+      <nav class="tabbar" aria-label="Ana bölümler">
+        <button class="tab-btn is-active" type="button" data-tab="watch"><i data-lucide="line-chart"></i><span>Piyasa İzleme</span></button>
+        <button class="tab-btn" type="button" data-tab="radar"><i data-lucide="radar"></i><span>AI Radar</span></button>
+        <button class="tab-btn" type="button" data-tab="report"><i data-lucide="newspaper"></i><span>Dünya Raporu</span></button>
+      </nav>
+    </header>
+
+    <main>
+      <section id="watch-panel" class="tab-panel is-active" aria-labelledby="watch-title">
+        <div class="section-head">
+          <div>
+            <h2 id="watch-title">Piyasa İzleme</h2>
+          </div>
+          <div class="section-actions">
+            <button id="refresh-prices" class="btn primary" type="button"><i data-lucide="refresh-cw"></i><span>Fiyatları yenile</span></button>
+          </div>
+        </div>
+
+        <div class="terminal-grid">
+          <section class="panel" aria-label="İzleme listesi">
+            <div class="toolbar">
+              <input id="symbol-input" class="input symbol-input" autocomplete="off" inputmode="latin" placeholder="Sembol" maxlength="12">
+              <button id="add-symbol" class="btn" type="button"><i data-lucide="plus"></i><span>Ekle</span></button>
+            </div>
+            <div class="status-strip">
+              <span id="price-status" class="chip">Fiyat bekleniyor</span>
+              <span id="sync-status" class="chip">Senkron kapalı</span>
+              <span id="watch-count" class="chip">0 sembol</span>
+            </div>
+            <div class="watch-head" aria-hidden="true">
+              <span></span>
+              <span>Sembol</span>
+              <span>Güncel fiyat</span>
+              <span>Günlük</span>
+              <span>Önceki kapanış</span>
+              <span>Son yenileme</span>
+              <span></span>
+            </div>
+            <div id="watchlist" class="watchlist"></div>
+          </section>
+
+          <aside class="panel panel-pad" aria-label="Ayarlar">
+            <div class="settings-section">
+              <h3>Finnhub</h3>
+              <div class="field">
+                <label for="finnhub-key">API anahtarı</label>
+                <input id="finnhub-key" class="input" type="password" autocomplete="off">
+              </div>
+              <div class="button-row">
+                <button id="save-finnhub" class="btn" type="button"><i data-lucide="save"></i><span>Kaydet</span></button>
+                <button id="clear-finnhub" class="btn ghost" type="button"><i data-lucide="key-round"></i><span>Temizle</span></button>
+              </div>
+            </div>
+
+            <div class="settings-section">
+              <h3>Supabase</h3>
+              <div class="field">
+                <label for="supabase-url">Project URL</label>
+                <input id="supabase-url" class="input" type="url" autocomplete="off">
+              </div>
+              <div class="field">
+                <label for="supabase-key">Publishable / anon key</label>
+                <input id="supabase-key" class="input" type="password" autocomplete="off">
+              </div>
+              <div class="button-row">
+                <button id="save-supabase" class="btn" type="button"><i data-lucide="save"></i><span>Kaydet</span></button>
+                <button id="clear-supabase" class="btn ghost" type="button"><i data-lucide="unlink"></i><span>Kes</span></button>
+              </div>
+            </div>
+
+            <div class="settings-section">
+              <h3>Hesap</h3>
+              <div class="field">
+                <label for="auth-email">E-posta</label>
+                <input id="auth-email" class="input" type="email" autocomplete="email">
+              </div>
+              <div class="field">
+                <label for="auth-password">Şifre</label>
+                <input id="auth-password" class="input" type="password" autocomplete="current-password">
+              </div>
+              <div class="button-row">
+                <button id="sign-in" class="btn primary" type="button"><i data-lucide="log-in"></i><span>Giriş</span></button>
+                <button id="sign-up" class="btn" type="button"><i data-lucide="user-plus"></i><span>Hesap aç</span></button>
+                <button id="sign-out" class="btn ghost" type="button"><i data-lucide="log-out"></i><span>Çıkış</span></button>
+              </div>
+              <p id="user-line" class="user-line">Oturum yok</p>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section id="radar-panel" class="tab-panel" aria-labelledby="radar-title">
+        <div class="section-head">
+          <div>
+            <h2 id="radar-title">AI Radar</h2>
+          </div>
+          <div class="section-actions">
+            <button id="run-radar" class="btn primary" type="button"><i data-lucide="scan-search"></i><span>Radar tara</span></button>
+            <button id="request-notifications" class="btn" type="button"><i data-lucide="bell"></i><span>Bildirim</span></button>
+          </div>
+        </div>
+
+        <div class="radar-grid">
+          <section class="panel" aria-label="Radar sonuçları">
+            <div class="status-strip">
+              <span id="radar-status" class="chip">Tarama bekleniyor</span>
+              <span class="chip warn">Yatırım tavsiyesi değildir</span>
+            </div>
+            <div id="radar-list" class="radar-list"></div>
+          </section>
+
+          <aside class="panel panel-pad radar-side" aria-label="Radar ayarları">
+            <h3>Aday listesi</h3>
+            <textarea id="radar-candidates" class="textarea" spellcheck="false"></textarea>
+            <label class="switch-line" for="radar-auto">
+              <span>Otomatik tarama</span>
+              <input id="radar-auto" type="checkbox">
+            </label>
+            <span id="radar-auto-note" class="chip">Kapalı</span>
+          </aside>
+        </div>
+      </section>
+
+      <section id="report-panel" class="tab-panel" aria-labelledby="report-tab-title">
+        <div class="section-head">
+          <div>
+            <h2 id="report-tab-title">Dünya Raporu</h2>
+          </div>
+          <div class="section-actions">
+            <button id="refresh-report" class="btn primary" type="button"><i data-lucide="refresh-cw"></i><span>Raporu yenile</span></button>
+            <button id="copy-report" class="btn" type="button"><i data-lucide="copy"></i><span>Kopyala</span></button>
+            <button id="print-report" class="btn" type="button"><i data-lucide="printer"></i><span>Yazdır / PDF</span></button>
+          </div>
+        </div>
+
+        <div class="report-grid">
+          <section class="panel print-area" aria-label="Dünya raporu">
+            <article id="report-content" class="report-card"></article>
+          </section>
+
+          <aside class="panel panel-pad report-side" aria-label="Rapor durumu">
+            <h3>Durum</h3>
+            <div id="report-status" class="chip">Rapor bekleniyor</div>
+            <div class="settings-section">
+              <h3>Son güncelleme</h3>
+              <p id="report-updated" class="user-line">Henüz alınmadı</p>
+            </div>
+          </aside>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="toast-zone" class="toast-zone" aria-live="polite"></div>
+
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const DEFAULT_SYMBOLS = ["SPY", "QQQM", "SMH", "NVDA", "ASML", "TSM", "PLTR"];
+      const DEFAULT_RADAR = ["NVDA", "AMD", "AVGO", "ARM", "MRVL", "ASML", "TSM", "MU", "SMCI", "PLTR", "ANET", "VRT", "ORCL", "CEG", "VST", "GEV", "ETN", "OKLO", "CRWD", "NET", "DDOG", "SNOW", "TSLA", "MSFT"];
+      const FALLBACK_ICONS = {
+        "line-chart": "▥",
+        radar: "◎",
+        newspaper: "▤",
+        "refresh-cw": "↻",
+        plus: "+",
+        save: "✓",
+        "key-round": "×",
+        unlink: "×",
+        "log-in": "→",
+        "user-plus": "+",
+        "log-out": "←",
+        "grip-vertical": "⋮",
+        "arrow-up": "↑",
+        "arrow-down": "↓",
+        "trash-2": "×",
+        "scan-search": "◎",
+        bell: "!",
+        copy: "⧉",
+        printer: "▣"
+      };
+      const STORAGE = {
+        watchlist: "pt.watchlist",
+        finnhub: "pt.finnhubKey",
+        supabaseUrl: "pt.supabaseUrl",
+        supabaseKey: "pt.supabaseKey",
+        radarCandidates: "pt.radarCandidates",
+        radarAuto: "pt.radarAuto",
+        report: "pt.lastReport"
+      };
+
+      const state = {
+        activeTab: "watch",
+        watchlist: loadSymbols(),
+        prices: {},
+        finnhubKey: safeGet(STORAGE.finnhub, ""),
+        supabaseUrl: safeGet(STORAGE.supabaseUrl, ""),
+        supabaseKey: safeGet(STORAGE.supabaseKey, ""),
+        supabaseClient: null,
+        authListener: null,
+        realtimeChannel: null,
+        user: null,
+        syncStatus: "kapalı",
+        syncTone: "",
+        syncSaveTimer: null,
+        remoteApplying: false,
+        dragSymbol: null,
+        pointerDrag: null,
+        radarResults: [],
+        radarAutoTimer: null,
+        reportLoadedThisSession: false,
+        currentReport: loadStoredReport()
+      };
+
+      const el = {
+        tabs: Array.from(document.querySelectorAll(".tab-btn")),
+        panels: {
+          watch: document.getElementById("watch-panel"),
+          radar: document.getElementById("radar-panel"),
+          report: document.getElementById("report-panel")
+        },
+        watchlist: document.getElementById("watchlist"),
+        symbolInput: document.getElementById("symbol-input"),
+        addSymbol: document.getElementById("add-symbol"),
+        refreshPrices: document.getElementById("refresh-prices"),
+        priceStatus: document.getElementById("price-status"),
+        syncStatus: document.getElementById("sync-status"),
+        watchCount: document.getElementById("watch-count"),
+        finnhubKey: document.getElementById("finnhub-key"),
+        saveFinnhub: document.getElementById("save-finnhub"),
+        clearFinnhub: document.getElementById("clear-finnhub"),
+        supabaseUrl: document.getElementById("supabase-url"),
+        supabaseKey: document.getElementById("supabase-key"),
+        saveSupabase: document.getElementById("save-supabase"),
+        clearSupabase: document.getElementById("clear-supabase"),
+        authEmail: document.getElementById("auth-email"),
+        authPassword: document.getElementById("auth-password"),
+        signIn: document.getElementById("sign-in"),
+        signUp: document.getElementById("sign-up"),
+        signOut: document.getElementById("sign-out"),
+        userLine: document.getElementById("user-line"),
+        runRadar: document.getElementById("run-radar"),
+        requestNotifications: document.getElementById("request-notifications"),
+        radarStatus: document.getElementById("radar-status"),
+        radarList: document.getElementById("radar-list"),
+        radarCandidates: document.getElementById("radar-candidates"),
+        radarAuto: document.getElementById("radar-auto"),
+        radarAutoNote: document.getElementById("radar-auto-note"),
+        refreshReport: document.getElementById("refresh-report"),
+        copyReport: document.getElementById("copy-report"),
+        printReport: document.getElementById("print-report"),
+        reportContent: document.getElementById("report-content"),
+        reportStatus: document.getElementById("report-status"),
+        reportUpdated: document.getElementById("report-updated"),
+        toastZone: document.getElementById("toast-zone")
+      };
+
+      boot();
+
+      function boot() {
+        el.finnhubKey.value = state.finnhubKey;
+        el.supabaseUrl.value = state.supabaseUrl;
+        el.supabaseKey.value = state.supabaseKey;
+        el.radarCandidates.value = safeGet(STORAGE.radarCandidates, DEFAULT_RADAR.join(", "));
+        el.radarAuto.checked = safeGet(STORAGE.radarAuto, "false") === "true";
+
+        bindEvents();
+        renderWatchlist();
+        renderRadar();
+        renderReport(state.currentReport, { cached: true, silent: true });
+        hydrateIcons();
+        updateAutoRadar();
+        initSupabase();
+      }
+
+      function bindEvents() {
+        el.tabs.forEach((button) => {
+          button.addEventListener("click", () => switchTab(button.dataset.tab));
+        });
+
+        el.addSymbol.addEventListener("click", addSymbolFromInput);
+        el.symbolInput.addEventListener("keydown", (event) => {
+          if (event.key === "Enter") addSymbolFromInput();
+        });
+        el.refreshPrices.addEventListener("click", refreshPrices);
+        el.saveFinnhub.addEventListener("click", saveFinnhubKey);
+        el.clearFinnhub.addEventListener("click", clearFinnhubKey);
+        el.saveSupabase.addEventListener("click", saveSupabaseConfig);
+        el.clearSupabase.addEventListener("click", clearSupabaseConfig);
+        el.signIn.addEventListener("click", signIn);
+        el.signUp.addEventListener("click", signUp);
+        el.signOut.addEventListener("click", signOut);
+
+        el.watchlist.addEventListener("click", handleWatchlistClick);
+        el.watchlist.addEventListener("dragstart", handleDragStart);
+        el.watchlist.addEventListener("dragover", handleDragOver);
+        el.watchlist.addEventListener("drop", handleDrop);
+        el.watchlist.addEventListener("dragend", handleDrop);
+        el.watchlist.addEventListener("pointerdown", handlePointerDown);
+        document.addEventListener("pointermove", handlePointerMove);
+        document.addEventListener("pointerup", handlePointerUp);
+
+        el.runRadar.addEventListener("click", () => runRadarScan({ silent: false }));
+        el.requestNotifications.addEventListener("click", requestNotifications);
+        el.radarCandidates.addEventListener("input", () => safeSet(STORAGE.radarCandidates, el.radarCandidates.value));
+        el.radarAuto.addEventListener("change", () => {
+          safeSet(STORAGE.radarAuto, String(el.radarAuto.checked));
+          updateAutoRadar();
+        });
+
+        el.refreshReport.addEventListener("click", refreshReport);
+        el.copyReport.addEventListener("click", copyReport);
+        el.printReport.addEventListener("click", () => window.print());
+
+        window.addEventListener("online", () => setSyncStatus(state.user ? "açık" : "kapalı", state.user ? "good" : ""));
+        window.addEventListener("offline", () => setSyncStatus("çevrimdışı", "warn"));
+        window.addEventListener("error", () => showToast("Beklenmeyen bir ekran hatası oluştu.", "bad"));
+        window.addEventListener("unhandledrejection", () => showToast("Bir işlem tamamlanamadı. Lütfen tekrar deneyin.", "bad"));
+        document.addEventListener("visibilitychange", () => {
+          if (!document.hidden && el.radarAuto.checked && state.activeTab === "radar") {
+            runRadarScan({ silent: true });
+          }
+        });
+      }
+
+      function switchTab(tab) {
+        state.activeTab = tab;
+        el.tabs.forEach((button) => button.classList.toggle("is-active", button.dataset.tab === tab));
+        Object.entries(el.panels).forEach(([key, panel]) => panel.classList.toggle("is-active", key === tab));
+        hydrateIcons();
+        if (tab === "report" && !state.reportLoadedThisSession) {
+          refreshReport();
+        }
+        if (tab === "radar" && el.radarAuto.checked && !state.radarResults.length) {
+          runRadarScan({ silent: true });
+        }
+      }
+
+      function loadSymbols() {
+        const raw = safeGet(STORAGE.watchlist, "");
+        if (!raw) return DEFAULT_SYMBOLS.slice();
+        try {
+          const parsed = JSON.parse(raw);
+          const symbols = Array.isArray(parsed) ? parsed.map(normalizeSymbol).filter(Boolean) : [];
+          return unique(symbols).length ? unique(symbols) : DEFAULT_SYMBOLS.slice();
+        } catch (_error) {
+          return DEFAULT_SYMBOLS.slice();
+        }
+      }
+
+      function saveWatchlist({ sync = true } = {}) {
+        safeSet(STORAGE.watchlist, JSON.stringify(state.watchlist));
+        renderWatchlist();
+        if (sync && !state.remoteApplying) scheduleRemoteSave();
+      }
+
+      function normalizeSymbol(value) {
+        return String(value || "")
+          .toLocaleUpperCase("en-US")
+          .replace(/[^A-Z0-9.-]/g, "")
+          .slice(0, 12);
+      }
+
+      function unique(items) {
+        return Array.from(new Set(items));
+      }
+
+      function addSymbolFromInput() {
+        const symbol = normalizeSymbol(el.symbolInput.value);
+        if (!symbol) {
+          showToast("Geçerli bir sembol girin.", "warn");
+          return;
+        }
+        addSymbol(symbol);
+        el.symbolInput.value = "";
+        el.symbolInput.focus();
+      }
+
+      function addSymbol(symbol, { quiet = false } = {}) {
+        const clean = normalizeSymbol(symbol);
+        if (!clean) return;
+        if (!state.watchlist.includes(clean)) {
+          state.watchlist.push(clean);
+          saveWatchlist();
+          if (!quiet) showToast(`${clean} listeye eklendi.`, "good");
+        } else if (!quiet) {
+          showToast(`${clean} zaten listede.`, "warn");
+        }
+      }
+
+      function removeSymbol(symbol) {
+        state.watchlist = state.watchlist.filter((item) => item !== symbol);
+        saveWatchlist();
+        showToast(`${symbol} çıkarıldı.`, "good");
+      }
+
+      function moveSymbol(fromIndex, toIndex) {
+        if (fromIndex < 0 || toIndex < 0 || fromIndex === toIndex) return;
+        const next = state.watchlist.slice();
+        const [item] = next.splice(fromIndex, 1);
+        next.splice(toIndex, 0, item);
+        state.watchlist = next;
+        saveWatchlist();
+      }
+
+      function renderWatchlist() {
+        el.watchCount.textContent = `${state.watchlist.length} sembol`;
+        el.watchlist.replaceChildren();
+        if (!state.watchlist.length) {
+          const empty = document.createElement("div");
+          empty.className = "empty-state";
+          empty.textContent = "İzleme listesi boş.";
+          el.watchlist.append(empty);
+          return;
+        }
+
+        const fragment = document.createDocumentFragment();
+        state.watchlist.forEach((symbol, index) => {
+          const price = state.prices[symbol] || {};
+          const row = document.createElement("div");
+          row.className = "watch-row";
+          row.draggable = true;
+          row.dataset.symbol = symbol;
+          row.dataset.index = String(index);
+
+          const drag = button("icon-btn drag-handle", "grip-vertical", "Sürükle");
+          drag.dataset.action = "drag";
+          row.append(drag);
+
+          const symbolCell = document.createElement("div");
+          symbolCell.className = "symbol-cell";
+          const strong = document.createElement("strong");
+          strong.textContent = symbol;
+          const note = document.createElement("span");
+          note.textContent = price.error ? "Veri alınamadı" : "ABD";
+          symbolCell.append(strong, note);
+          row.append(symbolCell);
+
+          row.append(metric("Güncel fiyat", formatMoney(price.current), price.error ? "cell-note" : ""));
+          row.append(metric("Günlük", formatPercent(price.percent), toneClass(price.percent, "change")));
+          row.append(metric("Önceki kapanış", formatMoney(price.previousClose), ""));
+          row.append(metric("Son yenileme", price.refreshedAt ? formatTime(price.refreshedAt) : "-", ""));
+
+          const actions = document.createElement("div");
+          actions.className = "actions";
+          const up = button("icon-btn", "arrow-up", "Yukarı taşı");
+          up.dataset.action = "up";
+          up.disabled = index === 0;
+          const down = button("icon-btn", "arrow-down", "Aşağı taşı");
+          down.dataset.action = "down";
+          down.disabled = index === state.watchlist.length - 1;
+          const trash = button("icon-btn", "trash-2", "Sil");
+          trash.dataset.action = "remove";
+          actions.append(up, down, trash);
+          row.append(actions);
+
+          fragment.append(row);
+        });
+
+        el.watchlist.append(fragment);
+        hydrateIcons();
+      }
+
+      function metric(label, value, valueClass) {
+        const wrapper = document.createElement("div");
+        wrapper.className = "metric";
+        const labelEl = document.createElement("span");
+        labelEl.className = "metric-label";
+        labelEl.textContent = label;
+        const valueEl = document.createElement("span");
+        valueEl.className = `metric-value ${valueClass || ""}`.trim();
+        valueEl.textContent = value;
+        wrapper.append(labelEl, valueEl);
+        return wrapper;
+      }
+
+      function handleWatchlistClick(event) {
+        const buttonEl = event.target.closest("button[data-action]");
+        const row = event.target.closest(".watch-row");
+        if (!buttonEl || !row) return;
+        const symbol = row.dataset.symbol;
+        const index = state.watchlist.indexOf(symbol);
+        const action = buttonEl.dataset.action;
+        if (action === "remove") removeSymbol(symbol);
+        if (action === "up") moveSymbol(index, index - 1);
+        if (action === "down") moveSymbol(index, index + 1);
+      }
+
+      function handleDragStart(event) {
+        const row = event.target.closest(".watch-row");
+        if (!row) return;
+        state.dragSymbol = row.dataset.symbol;
+        row.classList.add("dragging");
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/plain", state.dragSymbol);
+      }
+
+      function handleDragOver(event) {
+        if (!state.dragSymbol) return;
+        event.preventDefault();
+        const row = event.target.closest(".watch-row");
+        if (!row || row.dataset.symbol === state.dragSymbol) return;
+        const from = state.watchlist.indexOf(state.dragSymbol);
+        const to = state.watchlist.indexOf(row.dataset.symbol);
+        moveSymbol(from, to);
+      }
+
+      function handleDrop() {
+        state.dragSymbol = null;
+        document.querySelectorAll(".watch-row.dragging").forEach((row) => row.classList.remove("dragging"));
+      }
+
+      function handlePointerDown(event) {
+        const handle = event.target.closest(".drag-handle");
+        const row = event.target.closest(".watch-row");
+        if (!handle || !row) return;
+        state.pointerDrag = { symbol: row.dataset.symbol };
+        row.classList.add("dragging");
+        event.preventDefault();
+      }
+
+      function handlePointerMove(event) {
+        if (!state.pointerDrag) return;
+        const target = document.elementFromPoint(event.clientX, event.clientY);
+        const row = target?.closest?.(".watch-row");
+        if (!row || row.dataset.symbol === state.pointerDrag.symbol) return;
+        const from = state.watchlist.indexOf(state.pointerDrag.symbol);
+        const to = state.watchlist.indexOf(row.dataset.symbol);
+        moveSymbol(from, to);
+      }
+
+      function handlePointerUp() {
+        state.pointerDrag = null;
+        document.querySelectorAll(".watch-row.dragging").forEach((row) => row.classList.remove("dragging"));
+      }
+
+      function saveFinnhubKey() {
+        state.finnhubKey = el.finnhubKey.value.trim();
+        safeSet(STORAGE.finnhub, state.finnhubKey);
+        showToast("Finnhub anahtarı kaydedildi.", "good");
+      }
+
+      function clearFinnhubKey() {
+        state.finnhubKey = "";
+        el.finnhubKey.value = "";
+        safeRemove(STORAGE.finnhub);
+        showToast("Finnhub anahtarı temizlendi.", "good");
+      }
+
+      async function refreshPrices() {
+        saveFinnhubKey();
+        if (!state.finnhubKey) {
+          showToast("Fiyatlar için Finnhub API anahtarı gerekli.", "warn");
+          return;
+        }
+        setChip(el.priceStatus, "Fiyatlar yenileniyor", "warn");
+        el.refreshPrices.disabled = true;
+        try {
+          const chunks = chunk(state.watchlist, 5);
+          for (const group of chunks) {
+            await Promise.all(group.map(async (symbol) => {
+              try {
+                const quote = await finnhub("quote", { symbol });
+                if (!Number.isFinite(quote.c) && !Number.isFinite(quote.pc)) {
+                  throw new Error("quote_empty");
+                }
+                state.prices[symbol] = {
+                  current: Number(quote.c),
+                  percent: Number(quote.dp),
+                  previousClose: Number(quote.pc),
+                  refreshedAt: new Date().toISOString()
+                };
+              } catch (_error) {
+                state.prices[symbol] = {
+                  ...(state.prices[symbol] || {}),
+                  error: true,
+                  refreshedAt: new Date().toISOString()
+                };
+              }
+            }));
+          }
+          setChip(el.priceStatus, `Yenilendi ${formatTime(new Date().toISOString())}`, "good");
+          renderWatchlist();
+        } catch (_error) {
+          setChip(el.priceStatus, "Fiyat alınamadı", "bad");
+          showToast("Finnhub fiyatları alınamadı; diğer bölümler çalışmaya devam eder.", "bad");
+        } finally {
+          el.refreshPrices.disabled = false;
+        }
+      }
+
+      async function finnhub(path, params) {
+        const url = new URL(`https://finnhub.io/api/v1/${path}`);
+        Object.entries({ ...params, token: state.finnhubKey }).forEach(([key, value]) => url.searchParams.set(key, value));
+        const response = await fetch(url.toString());
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || data.error) {
+          throw new Error(data.error || "Finnhub yanıt vermedi.");
+        }
+        return data;
+      }
+
+      async function saveSupabaseConfig() {
+        state.supabaseUrl = el.supabaseUrl.value.trim();
+        state.supabaseKey = el.supabaseKey.value.trim();
+        safeSet(STORAGE.supabaseUrl, state.supabaseUrl);
+        safeSet(STORAGE.supabaseKey, state.supabaseKey);
+        showToast("Supabase ayarları kaydedildi.", "good");
+        await initSupabase();
+      }
+
+      async function clearSupabaseConfig() {
+        if (state.supabaseClient) {
+          await state.supabaseClient.auth.signOut().catch(() => {});
+        }
+        safeRemove(STORAGE.supabaseUrl);
+        safeRemove(STORAGE.supabaseKey);
+        state.supabaseUrl = "";
+        state.supabaseKey = "";
+        state.supabaseClient = null;
+        state.user = null;
+        el.supabaseUrl.value = "";
+        el.supabaseKey.value = "";
+        unsubscribeRealtime();
+        setSyncStatus("kapalı", "");
+        renderAuth();
+        showToast("Supabase bağlantısı kesildi.", "good");
+      }
+
+      async function initSupabase() {
+        if (!state.supabaseUrl || !state.supabaseKey) {
+          setSyncStatus("kapalı", "");
+          renderAuth();
+          return;
+        }
+        if (!window.supabase?.createClient) {
+          setSyncStatus("kütüphane yüklenemedi", "bad");
+          renderAuth();
+          return;
+        }
+
+        try {
+          unsubscribeRealtime();
+          state.supabaseClient = window.supabase.createClient(state.supabaseUrl, state.supabaseKey, {
+            auth: { persistSession: true, autoRefreshToken: true },
+            realtime: { params: { eventsPerSecond: 2 } }
+          });
+
+          if (state.authListener?.subscription) {
+            state.authListener.subscription.unsubscribe();
+          }
+          const authResponse = await state.supabaseClient.auth.onAuthStateChange((_event, session) => {
+            state.user = session?.user || null;
+            renderAuth();
+            if (state.user) {
+              loadRemoteWatchlist();
+              subscribeRealtime();
+            } else {
+              unsubscribeRealtime();
+              setSyncStatus("kapalı", "");
+            }
+          });
+          state.authListener = authResponse.data;
+
+          const { data, error } = await state.supabaseClient.auth.getSession();
+          if (error) throw error;
+          state.user = data.session?.user || null;
+          renderAuth();
+          if (state.user) {
+            await loadRemoteWatchlist();
+            subscribeRealtime();
+          } else {
+            setSyncStatus("oturum yok", "warn");
+          }
+        } catch (error) {
+          setSyncStatus("hatalı", "bad");
+          showToast(error.message || "Supabase bağlantısı kurulamadı.", "bad");
+        }
+      }
+
+      function renderAuth() {
+        if (state.user) {
+          el.userLine.textContent = `Oturum: ${state.user.email || state.user.id}`;
+          el.signOut.disabled = false;
+        } else {
+          el.userLine.textContent = "Oturum yok";
+          el.signOut.disabled = true;
+        }
+      }
+
+      async function signIn() {
+        if (!state.supabaseClient) {
+          showToast("Önce Supabase ayarlarını kaydedin.", "warn");
+          return;
+        }
+        const email = el.authEmail.value.trim();
+        const password = el.authPassword.value;
+        if (!email || !password) {
+          showToast("E-posta ve şifre gerekli.", "warn");
+          return;
+        }
+        const { error } = await state.supabaseClient.auth.signInWithPassword({ email, password });
+        if (error) showToast(error.message, "bad");
+        else showToast("Giriş yapıldı.", "good");
+      }
+
+      async function signUp() {
+        if (!state.supabaseClient) {
+          showToast("Önce Supabase ayarlarını kaydedin.", "warn");
+          return;
+        }
+        const email = el.authEmail.value.trim();
+        const password = el.authPassword.value;
+        if (!email || password.length < 6) {
+          showToast("Şifre en az 6 karakter olmalı.", "warn");
+          return;
+        }
+        const { data, error } = await state.supabaseClient.auth.signUp({ email, password });
+        if (error) showToast(error.message, "bad");
+        else if (!data.session) showToast("Hesap oluşturuldu. E-posta doğrulaması gerekebilir.", "good");
+        else showToast("Hesap oluşturuldu.", "good");
+      }
+
+      async function signOut() {
+        if (!state.supabaseClient) return;
+        await state.supabaseClient.auth.signOut();
+        state.user = null;
+        unsubscribeRealtime();
+        renderAuth();
+        setSyncStatus("kapalı", "");
+        showToast("Çıkış yapıldı.", "good");
+      }
+
+      async function loadRemoteWatchlist() {
+        if (!state.supabaseClient || !state.user) return;
+        setSyncStatus("bağlanıyor", "warn");
+        const { data, error } = await state.supabaseClient
+          .from("watchlists")
+          .select("symbols, updated_at")
+          .eq("user_id", state.user.id)
+          .maybeSingle();
+
+        if (error) {
+          setSyncStatus("hatalı", "bad");
+          showToast(error.message || "Senkronizasyon verisi alınamadı.", "bad");
+          return;
+        }
+
+        if (data?.symbols?.length) {
+          state.remoteApplying = true;
+          state.watchlist = unique(data.symbols.map(normalizeSymbol).filter(Boolean));
+          saveWatchlist({ sync: false });
+          state.remoteApplying = false;
+        } else {
+          await saveRemoteWatchlist();
+        }
+        setSyncStatus("açık", "good");
+      }
+
+      function scheduleRemoteSave() {
+        if (!state.supabaseClient || !state.user) return;
+        clearTimeout(state.syncSaveTimer);
+        state.syncSaveTimer = setTimeout(saveRemoteWatchlist, 600);
+      }
+
+      async function saveRemoteWatchlist() {
+        if (!state.supabaseClient || !state.user) return;
+        const { error } = await state.supabaseClient
+          .from("watchlists")
+          .upsert({
+            user_id: state.user.id,
+            symbols: state.watchlist,
+            updated_at: new Date().toISOString()
+          }, { onConflict: "user_id" });
+
+        if (error) {
+          setSyncStatus("hatalı", "bad");
+          showToast(error.message || "Liste Supabase'e kaydedilemedi.", "bad");
+        } else {
+          setSyncStatus("açık", "good");
+        }
+      }
+
+      function subscribeRealtime() {
+        if (!state.supabaseClient || !state.user) return;
+        unsubscribeRealtime();
+        state.realtimeChannel = state.supabaseClient
+          .channel(`watchlist-${state.user.id}`)
+          .on("postgres_changes", {
+            event: "*",
+            schema: "public",
+            table: "watchlists",
+            filter: `user_id=eq.${state.user.id}`
+          }, (payload) => {
+            const symbols = payload.new?.symbols;
+            if (!Array.isArray(symbols)) return;
+            const next = unique(symbols.map(normalizeSymbol).filter(Boolean));
+            if (JSON.stringify(next) === JSON.stringify(state.watchlist)) return;
+            state.remoteApplying = true;
+            state.watchlist = next;
+            saveWatchlist({ sync: false });
+            state.remoteApplying = false;
+            setSyncStatus("açık", "good");
+          })
+          .subscribe((status) => {
+            if (status === "SUBSCRIBED") setSyncStatus("açık", "good");
+            if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") setSyncStatus("hatalı", "bad");
+            if (status === "CLOSED") setSyncStatus("kapalı", "warn");
+          });
+      }
+
+      function unsubscribeRealtime() {
+        if (state.realtimeChannel && state.supabaseClient) {
+          state.supabaseClient.removeChannel(state.realtimeChannel);
+        }
+        state.realtimeChannel = null;
+      }
+
+      function setSyncStatus(label, tone) {
+        state.syncStatus = label;
+        state.syncTone = tone;
+        const text = label === "açık" ? "Senkron açık" : label === "kapalı" ? "Senkron kapalı" : `Senkron ${label}`;
+        setChip(el.syncStatus, text, tone);
+      }
+
+      async function runRadarScan({ silent }) {
+        saveFinnhubKey();
+        if (!state.finnhubKey) {
+          if (!silent) showToast("Radar için Finnhub API anahtarı gerekli.", "warn");
+          return;
+        }
+        const candidates = parseCandidates();
+        if (!candidates.length) {
+          showToast("Radar aday listesi boş.", "warn");
+          return;
+        }
+
+        setChip(el.radarStatus, "Radar tarıyor", "warn");
+        el.runRadar.disabled = true;
+        const results = [];
+        try {
+          for (const group of chunk(candidates, 4)) {
+            const settled = await Promise.allSettled(group.map(analyzeRadarSymbol));
+            settled.forEach((item) => {
+              if (item.status === "fulfilled" && item.value) results.push(item.value);
+            });
+          }
+          state.radarResults = results.sort((a, b) => b.score - a.score).slice(0, 12);
+          setChip(el.radarStatus, `Son tarama ${formatTime(new Date().toISOString())}`, "good");
+          renderRadar();
+          maybeNotifyRadar();
+        } catch (_error) {
+          setChip(el.radarStatus, "Radar hatası", "bad");
+          showToast("Radar taraması tamamlanamadı.", "bad");
+        } finally {
+          el.runRadar.disabled = false;
+        }
+      }
+
+      function parseCandidates() {
+        const raw = el.radarCandidates.value || "";
+        safeSet(STORAGE.radarCandidates, raw);
+        return unique(raw.split(/[\s,;]+/).map(normalizeSymbol).filter(Boolean)).slice(0, 40);
+      }
+
+      async function analyzeRadarSymbol(symbol) {
+        const to = new Date();
+        const from = new Date(to.getTime() - 6 * 24 * 60 * 60 * 1000);
+        const fromUnix = Math.floor((Date.now() - 22 * 24 * 60 * 60 * 1000) / 1000);
+        const toUnix = Math.floor(Date.now() / 1000);
+        const [quoteResult, newsResult, candleResult, recResult] = await Promise.allSettled([
+          finnhub("quote", { symbol }),
+          finnhub("company-news", { symbol, from: dateOnly(from), to: dateOnly(to) }),
+          finnhub("stock/candle", { symbol, resolution: "D", from: fromUnix, to: toUnix }),
+          finnhub("stock/recommendation", { symbol })
+        ]);
+
+        const quote = quoteResult.status === "fulfilled" ? quoteResult.value : {};
+        const news = newsResult.status === "fulfilled" && Array.isArray(newsResult.value) ? newsResult.value : [];
+        const candle = candleResult.status === "fulfilled" ? candleResult.value : {};
+        const rec = recResult.status === "fulfilled" && Array.isArray(recResult.value) ? recResult.value : [];
+        const text = news.map((item) => `${item.headline || ""} ${item.summary || ""}`).join(" ").toLocaleLowerCase("en-US");
+        const keywords = ["ai", "artificial intelligence", "accelerator", "gpu", "semiconductor", "chip", "foundry", "data center", "power grid", "nuclear", "robot", "cybersecurity", "cloud", "defense", "quantum"];
+        const keywordHits = keywords.reduce((count, keyword) => count + (text.includes(keyword) ? 1 : 0), 0);
+        const percent = Number(quote.dp || 0);
+        const momentumScore = clamp(percent + 5, 0, 20);
+        const newsScore = clamp(news.length * 5, 0, 25);
+        const keywordScore = clamp(keywordHits * 6, 0, 25);
+        const volumeRatio = volumeSignal(candle);
+        const volumeScore = volumeRatio ? clamp((volumeRatio - 1) * 18, 0, 18) : 0;
+        const analystScore = analystSignal(rec);
+        const score = Math.round(clamp(20 + momentumScore + newsScore + keywordScore + volumeScore + analystScore, 0, 100));
+        const reasons = [];
+
+        if (percent > 0) reasons.push(`Fiyat momentumu pozitif: ${formatPercent(percent)}.`);
+        else if (percent < 0) reasons.push(`Fiyat momentumu zayıf: ${formatPercent(percent)}.`);
+        if (news.length) reasons.push(`${news.length} güncel haber başlığı tarandı.`);
+        if (keywordHits) reasons.push(`AI/çip/veri merkezi temalarında ${keywordHits} anahtar kelime yakalandı.`);
+        if (volumeRatio) reasons.push(`Hacim yaklaşık ${volumeRatio.toFixed(1)}x son ortalama seviyesinde.`);
+        if (analystScore) reasons.push("Analist eğilimi pozitif bölgede.");
+        if (!reasons.length) reasons.push("Sınırlı veriyle izleme listesine alınabilir.");
+
+        return {
+          symbol,
+          score,
+          price: Number(quote.c || 0),
+          percent,
+          reasons,
+          headlines: news.slice(0, 2).map((item) => ({
+            title: item.headline || "Haber",
+            url: item.url || ""
+          }))
+        };
+      }
+
+      function volumeSignal(candle) {
+        if (candle?.s !== "ok" || !Array.isArray(candle.v) || candle.v.length < 6) return 0;
+        const values = candle.v.filter((value) => Number.isFinite(value) && value > 0);
+        if (values.length < 6) return 0;
+        const latest = values[values.length - 1];
+        const average = values.slice(0, -1).reduce((sum, value) => sum + value, 0) / (values.length - 1);
+        return average ? latest / average : 0;
+      }
+
+      function analystSignal(items) {
+        const latest = items[0];
+        if (!latest) return 0;
+        const positive = Number(latest.strongBuy || 0) + Number(latest.buy || 0);
+        const negative = Number(latest.sell || 0) + Number(latest.strongSell || 0);
+        return positive > negative * 2 ? 8 : 0;
+      }
+
+      function renderRadar() {
+        el.radarList.replaceChildren();
+        if (!state.radarResults.length) {
+          const empty = document.createElement("div");
+          empty.className = "empty-state";
+          empty.textContent = "Radar sonucu yok.";
+          el.radarList.append(empty);
+          hydrateIcons();
+          return;
+        }
+
+        const fragment = document.createDocumentFragment();
+        state.radarResults.forEach((item) => {
+          const row = document.createElement("article");
+          row.className = "radar-row";
+
+          const symbolBox = document.createElement("div");
+          symbolBox.className = "radar-symbol";
+          const symbolText = document.createElement("div");
+          const strong = document.createElement("strong");
+          strong.textContent = item.symbol;
+          const note = document.createElement("div");
+          note.className = toneClass(item.percent, "cell-note");
+          note.textContent = `${formatMoney(item.price)} · ${formatPercent(item.percent)}`;
+          symbolText.append(strong, note);
+          const score = document.createElement("div");
+          score.className = "score-ring";
+          score.textContent = item.score;
+          symbolBox.append(symbolText, score);
+
+          const body = document.createElement("div");
+          const reasons = document.createElement("ul");
+          reasons.className = "reason-list";
+          item.reasons.forEach((reason) => {
+            const li = document.createElement("li");
+            li.textContent = reason;
+            reasons.append(li);
+          });
+          const links = document.createElement("div");
+          links.className = "headline-links";
+          item.headlines.forEach((headline) => {
+            const a = safeLink(headline.url, headline.title);
+            if (a) links.append(a);
+          });
+          body.append(reasons, links);
+
+          const add = button("btn", "plus", "İzleme listesine ekle");
+          add.addEventListener("click", () => addSymbol(item.symbol));
+
+          row.append(symbolBox, body, add);
+          fragment.append(row);
+        });
+
+        el.radarList.append(fragment);
+        hydrateIcons();
+      }
+
+      function updateAutoRadar() {
+        clearInterval(state.radarAutoTimer);
+        state.radarAutoTimer = null;
+        if (el.radarAuto.checked) {
+          state.radarAutoTimer = setInterval(() => {
+            if (!document.hidden) runRadarScan({ silent: true });
+          }, 15 * 60 * 1000);
+          setChip(el.radarAutoNote, "15 dakikada bir", "good");
+        } else {
+          setChip(el.radarAutoNote, "Kapalı", "");
+        }
+      }
+
+      async function requestNotifications() {
+        if (!("Notification" in window)) {
+          showToast("Bu tarayıcı bildirimleri desteklemiyor.", "warn");
+          return;
+        }
+        const permission = await Notification.requestPermission();
+        if (permission === "granted") showToast("Radar bildirimleri açıldı.", "good");
+        else showToast("Bildirim izni verilmedi.", "warn");
+      }
+
+      function maybeNotifyRadar() {
+        if (!("Notification" in window) || Notification.permission !== "granted") return;
+        const top = state.radarResults[0];
+        if (!top || top.score < 72) return;
+        const key = `pt.notify.${dateOnly(new Date())}.${top.symbol}`;
+        if (safeGet(key, "")) return;
+        safeSet(key, "1");
+        new Notification(`AI Radar: ${top.symbol}`, {
+          body: `Skor ${top.score}. ${top.reasons[0] || "Dikkat çeken hareket."}`
+        });
+      }
+
+      async function refreshReport() {
+        state.reportLoadedThisSession = true;
+        setChip(el.reportStatus, "Rapor hazırlanıyor", "warn");
+        el.refreshReport.disabled = true;
+        renderReportLoading();
+        try {
+          const response = await fetch("/api/report", { method: "POST" });
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok || !data.ok) {
+            if (data.detail) console.warn(data.detail);
+            throw new Error(data.error || "Rapor alınamadı.");
+          }
+          state.currentReport = data.report;
+          safeSet(STORAGE.report, JSON.stringify(data.report));
+          renderReport(data.report, { cached: data.cached });
+          setChip(el.reportStatus, data.cached ? "Önbellekten alındı" : "Güncel rapor", data.cached ? "warn" : "good");
+        } catch (error) {
+          setChip(el.reportStatus, "Rapor hatası", "bad");
+          showToast("Dünya Raporu alınamadı. Son başarılı rapor varsa gösteriliyor.", "bad");
+          if (state.currentReport) {
+            renderReport(state.currentReport, { cached: true, stale: true });
+          } else {
+            renderReportError(error.message || "Rapor alınamadı.");
+          }
+        } finally {
+          el.refreshReport.disabled = false;
+        }
+      }
+
+      function loadStoredReport() {
+        const raw = safeGet(STORAGE.report, "");
+        if (!raw) return null;
+        try {
+          return JSON.parse(raw);
+        } catch (_error) {
+          return null;
+        }
+      }
+
+      function renderReportLoading() {
+        el.reportContent.replaceChildren();
+        const line = document.createElement("div");
+        line.className = "loading-line";
+        const spinner = document.createElement("span");
+        spinner.className = "spinner";
+        const text = document.createElement("span");
+        text.textContent = "Güncel kaynaklar kontrol ediliyor.";
+        line.append(spinner, text);
+        el.reportContent.append(line);
+      }
+
+      function renderReportError(message) {
+        el.reportContent.replaceChildren();
+        const empty = document.createElement("div");
+        empty.className = "empty-state";
+        empty.textContent = message || "Rapor alınamadı.";
+        el.reportContent.append(empty);
+      }
+
+      function renderReport(report, options = {}) {
+        el.reportContent.replaceChildren();
+        if (!report) {
+          const empty = document.createElement("div");
+          empty.className = "empty-state";
+          empty.textContent = "Rapor bekleniyor.";
+          el.reportContent.append(empty);
+          if (!options.silent) setChip(el.reportStatus, "Rapor bekleniyor", "");
+          return;
+        }
+
+        const title = document.createElement("h1");
+        title.className = "report-title";
+        title.textContent = report.title || "Dünya Raporu";
+
+        const meta = document.createElement("div");
+        meta.className = "report-meta";
+        meta.append(chipElement(formatReportTime(report.generatedAt), options.stale ? "warn" : "good"));
+        meta.append(chipElement(toneLabel(report.marketTone), "neutral"));
+        if (options.cached) meta.append(chipElement(options.stale ? "Son başarılı rapor" : "Kısa önbellek", "warn"));
+
+        const tags = document.createElement("div");
+        tags.className = "report-tags";
+        (report.tags || []).forEach((tag) => {
+          const tagEl = document.createElement("span");
+          tagEl.className = `tag ${tag.tone || "neutral"}`;
+          tagEl.textContent = tag.label;
+          tags.append(tagEl);
+        });
+
+        el.reportContent.append(title, meta, tags);
+        (report.sections || []).forEach((section) => {
+          const block = document.createElement("section");
+          block.className = "report-section";
+          const h3 = document.createElement("h3");
+          h3.textContent = section.heading;
+          block.append(h3);
+          (section.paragraphs || []).forEach((paragraph) => {
+            const p = document.createElement("p");
+            p.textContent = paragraph;
+            block.append(p);
+          });
+          el.reportContent.append(block);
+        });
+
+        const sourceBlock = document.createElement("section");
+        sourceBlock.className = "report-section";
+        const sourceTitle = document.createElement("h3");
+        sourceTitle.textContent = "Kaynaklar";
+        const list = document.createElement("ul");
+        list.className = "sources";
+        (report.sources || []).forEach((source) => {
+          const li = document.createElement("li");
+          const link = safeLink(source.url, `${source.id}: ${source.title}`);
+          if (link) li.append(link);
+          else li.textContent = `${source.id}: ${source.title}`;
+          const metaLine = document.createElement("span");
+          metaLine.className = "source-meta";
+          metaLine.textContent = [source.publisher, source.publishedAt, source.accessedAt].filter(Boolean).join(" · ");
+          li.append(metaLine);
+          list.append(li);
+        });
+        sourceBlock.append(sourceTitle, list);
+        el.reportContent.append(sourceBlock);
+
+        if (report.disclaimer) {
+          const disclaimer = document.createElement("p");
+          disclaimer.className = "user-line";
+          disclaimer.textContent = report.disclaimer;
+          el.reportContent.append(disclaimer);
+        }
+
+        el.reportUpdated.textContent = formatReportTime(report.generatedAt);
+      }
+
+      async function copyReport() {
+        if (!state.currentReport) {
+          showToast("Kopyalanacak rapor yok.", "warn");
+          return;
+        }
+        try {
+          await navigator.clipboard.writeText(reportToText(state.currentReport));
+          showToast("Rapor kopyalandı.", "good");
+        } catch (_error) {
+          showToast("Kopyalama yapılamadı.", "bad");
+        }
+      }
+
+      function reportToText(report) {
+        const lines = [report.title, `Güncelleme: ${formatReportTime(report.generatedAt)}`, ""];
+        (report.sections || []).forEach((section) => {
+          lines.push(section.heading);
+          (section.paragraphs || []).forEach((paragraph) => lines.push(paragraph));
+          lines.push("");
+        });
+        lines.push("Kaynaklar");
+        (report.sources || []).forEach((source) => lines.push(`${source.id}: ${source.title} - ${source.url}`));
+        if (report.disclaimer) lines.push("", report.disclaimer);
+        return lines.join("\n");
+      }
+
+      function button(className, icon, label) {
+        const btn = document.createElement("button");
+        btn.className = className;
+        btn.type = "button";
+        btn.title = label;
+        const iconEl = document.createElement("i");
+        iconEl.setAttribute("data-lucide", icon);
+        const labelEl = document.createElement("span");
+        if (className.includes("icon-btn")) labelEl.className = "sr-only";
+        labelEl.textContent = label;
+        btn.append(iconEl, labelEl);
+        return btn;
+      }
+
+      function chipElement(text, tone) {
+        const chip = document.createElement("span");
+        chip.className = `chip ${tone || ""}`.trim();
+        chip.textContent = text;
+        return chip;
+      }
+
+      function safeLink(url, text) {
+        try {
+          const parsed = new URL(url);
+          if (!["http:", "https:"].includes(parsed.protocol)) return null;
+          const a = document.createElement("a");
+          a.href = parsed.toString();
+          a.target = "_blank";
+          a.rel = "noopener noreferrer";
+          a.textContent = text || parsed.hostname;
+          return a;
+        } catch (_error) {
+          return null;
+        }
+      }
+
+      function setChip(target, text, tone) {
+        target.textContent = text;
+        target.className = `chip ${tone || ""}`.trim();
+      }
+
+      function toneClass(value, base) {
+        const numeric = Number(value);
+        if (!Number.isFinite(numeric) || numeric === 0) return base || "";
+        return `${base || ""} ${numeric > 0 ? "positive" : "negative"}`.trim();
+      }
+
+      function formatMoney(value) {
+        const numeric = Number(value);
+        if (!Number.isFinite(numeric) || numeric <= 0) return "-";
+        return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 }).format(numeric);
+      }
+
+      function formatPercent(value) {
+        const numeric = Number(value);
+        if (!Number.isFinite(numeric)) return "-";
+        const sign = numeric > 0 ? "+" : "";
+        return `${sign}${numeric.toFixed(2)}%`;
+      }
+
+      function formatTime(value) {
+        if (!value) return "-";
+        return new Intl.DateTimeFormat("tr-TR", {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          timeZone: "Europe/Istanbul"
+        }).format(new Date(value));
+      }
+
+      function formatReportTime(value) {
+        if (!value) return "Tarih yok";
+        return new Intl.DateTimeFormat("tr-TR", {
+          dateStyle: "medium",
+          timeStyle: "short",
+          timeZone: "Europe/Istanbul"
+        }).format(new Date(value));
+      }
+
+      function toneLabel(value) {
+        const labels = {
+          "risk-on": "Risk iştahı açık",
+          "risk-off": "Risk iştahı kapalı",
+          mixed: "Karışık piyasa",
+          defensive: "Defansif hava",
+          unclear: "Belirsiz hava"
+        };
+        return labels[value] || "Piyasa tonu belirsiz";
+      }
+
+      function dateOnly(date) {
+        return new Date(date).toISOString().slice(0, 10);
+      }
+
+      function chunk(items, size) {
+        const chunks = [];
+        for (let index = 0; index < items.length; index += size) {
+          chunks.push(items.slice(index, index + size));
+        }
+        return chunks;
+      }
+
+      function clamp(value, min, max) {
+        return Math.min(max, Math.max(min, Number(value) || 0));
+      }
+
+      function hydrateIcons() {
+        if (window.lucide?.createIcons) {
+          window.lucide.createIcons();
+          return;
+        }
+        document.querySelectorAll("i[data-lucide]").forEach((icon) => {
+          icon.classList.add("fallback-icon");
+          icon.textContent = FALLBACK_ICONS[icon.getAttribute("data-lucide")] || "•";
+        });
+      }
+
+      function showToast(message, tone) {
+        const toast = document.createElement("div");
+        toast.className = `toast ${tone || ""}`.trim();
+        toast.textContent = message;
+        el.toastZone.append(toast);
+        setTimeout(() => toast.remove(), 4600);
+      }
+
+      function safeGet(key, fallback) {
+        try {
+          const value = localStorage.getItem(key);
+          return value === null ? fallback : value;
+        } catch (_error) {
+          return fallback;
+        }
+      }
+
+      function safeSet(key, value) {
+        try {
+          localStorage.setItem(key, value);
+        } catch (_error) {
+          showToast("Tarayıcı yerel kayıt alanına yazamadı.", "warn");
+        }
+      }
+
+      function safeRemove(key) {
+        try {
+          localStorage.removeItem(key);
+        } catch (_error) {}
+      }
+    });
+  </script>
+</body>
+</html>
