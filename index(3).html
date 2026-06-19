@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b1020" />
+  <title>ABD Piyasa İzleyici v2</title>
+  <style>
+    :root{
+      color-scheme:dark;--bg:#0b1020;--panel:#121a2e;--panel2:#17213a;--text:#eef3ff;
+      --muted:#98a6c7;--line:#283451;--good:#45d483;--bad:#ff6b7a;--accent:#6ea8fe;--warn:#ffc857
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:linear-gradient(180deg,#09101f,#0d1426 55%,#0a1020);color:var(--text);
+      font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;min-height:100vh}
+    .wrap{max-width:1180px;margin:auto;padding:24px}
+    header{display:flex;gap:16px;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-bottom:20px}
+    h1{font-size:clamp(24px,4vw,38px);margin:0}.sub{color:var(--muted);margin-top:6px}
+    .actions,.row{display:flex;gap:10px;flex-wrap:wrap}.grid{display:grid;grid-template-columns:1.45fr .85fr;gap:18px}
+    .panel{background:rgba(18,26,46,.95);border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:0 12px 35px rgba(0,0,0,.22)}
+    .panel h2{margin:0 0 14px;font-size:20px}
+    button,input{font:inherit}button{border:1px solid var(--line);background:var(--panel2);color:var(--text);padding:10px 14px;border-radius:11px;cursor:pointer}
+    button:hover{filter:brightness(1.12)}button:disabled{opacity:.55;cursor:not-allowed}.primary{background:var(--accent);color:#06101e;border:0;font-weight:750}
+    .danger{color:#ffd7db}.good{color:var(--good)}.bad{color:var(--bad)}.muted{color:var(--muted)}
+    .add{display:flex;gap:9px;margin-bottom:14px}.add input{flex:1;min-width:100px}
+    input{background:#0c1428;border:1px solid var(--line);color:var(--text);padding:11px 12px;border-radius:10px}
+    table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:12px 7px;border-bottom:1px solid var(--line)}
+    th{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+    td:nth-child(3),td:nth-child(4),td:nth-child(5){font-variant-numeric:tabular-nums}.symbol{font-weight:800}
+    .status{font-size:13px;color:var(--muted);margin:10px 0 0}.settings{display:grid;gap:10px}.settings label{font-size:13px;color:var(--muted)}
+    .settings input{width:100%}.tiny{font-size:12px;color:var(--muted);line-height:1.45}.foot{margin-top:18px;color:var(--muted);font-size:12px;line-height:1.5}
+    .radar-list{display:grid;gap:10px}.radar-card{background:#0d162b;border:1px solid var(--line);border-radius:13px;padding:13px}
+    .radar-top{display:flex;justify-content:space-between;gap:10px;align-items:center}.score{background:#203051;padding:5px 8px;border-radius:999px;font-weight:750}
+    .headline{margin:8px 0 0;font-size:14px;line-height:1.45}.empty{padding:22px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:12px}
+    .drag{width:38px;text-align:center;color:var(--muted);font-size:20px;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none}
+    tr.dragging{opacity:.6;background:#1b2947}.move-buttons{display:flex;gap:4px}.move-buttons button{padding:6px 9px;min-width:34px}
+    .sync-badge{display:inline-flex;align-items:center;gap:7px;padding:6px 9px;border:1px solid var(--line);border-radius:999px;font-size:12px;color:var(--muted)}
+    .dot{width:8px;height:8px;border-radius:50%;background:var(--warn)}.dot.online{background:var(--good)}
+    .divider{height:1px;background:var(--line);margin:18px 0}.hidden{display:none!important}
+    @media(max-width:850px){
+      .grid{grid-template-columns:1fr}.wrap{padding:14px}.panel{padding:14px}
+      th:nth-child(5),td:nth-child(5){display:none}.move-buttons button{padding:7px 10px}
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>ABD Piyasa İzleyici <span style="font-size:13px;color:#98a6c7">v2.2</span></h1>
+      <div class="sub">Cihazlar arası senkronizasyon + iPad uyumlu sıralama</div>
+    </div>
+    <div class="actions">
+      <span class="sync-badge"><span id="syncDot" class="dot"></span><span id="syncBadge">Yerel kullanım</span></span>
+      <button id="notifyBtn">Bildirimleri aç</button>
+      <button class="primary" id="refreshBtn">↻ Fiyatları yenile</button>
+    </div>
+  </header>
+
+  <div class="grid">
+    <section class="panel">
+      <h2>İzleme listem</h2>
+      <div class="add">
+        <input id="symbolInput" maxlength="10" placeholder="Örn. NVDA veya SMH" autocomplete="off" />
+        <button id="addBtn">Ekle</button>
+      </div>
+      <div style="overflow:auto">
+        <table>
+          <thead><tr><th></th><th>Sembol</th><th>Fiyat</th><th>Günlük</th><th>Önceki kapanış</th><th>Sırala</th><th></th></tr></thead>
+          <tbody id="watchBody"></tbody>
+        </table>
+      </div>
+      <div class="status" id="priceStatus">Henüz yenilenmedi.</div>
+      <p class="tiny">Parmakla sıralamak için soldaki ≡ işaretini basılı tutup yukarı veya aşağı sürükle. iPad’de ayrıca ok düğmelerini kullanabilirsin.</p>
+    </section>
+
+    <aside class="panel">
+      <h2>Piyasa verisi</h2>
+      <div class="settings">
+        <label>Finnhub API anahtarı
+          <input id="apiKey" type="password" placeholder="Finnhub API anahtarın" autocomplete="off" />
+        </label>
+        <button id="saveKeyBtn">Anahtarı kaydet</button>
+        <button id="radarBtn">AI Radar’ı şimdi tara</button>
+      </div>
+
+      <div class="divider"></div>
+      <h2>Cihaz senkronizasyonu</h2>
+      <div class="settings">
+        <label>Supabase proje adresi
+          <input id="supabaseUrl" type="url" placeholder="https://xxxx.supabase.co" autocomplete="off" />
+        </label>
+        <label>Supabase publishable / anon key
+          <input id="supabaseKey" type="password" placeholder="sb_publishable_... veya anon key" autocomplete="off" />
+        </label>
+        <button id="saveCloudBtn">Bulut ayarlarını kaydet</button>
+        <label>E-posta
+          <input id="email" type="email" placeholder="E-posta adresin" autocomplete="email" />
+        </label>
+        <label>Şifre
+          <input id="password" type="password" minlength="6" placeholder="En az 6 karakter" autocomplete="current-password" />
+        </label>
+        <div class="row">
+          <button id="signUpBtn">Hesap oluştur</button>
+          <button id="signInBtn" class="primary">Giriş yap</button>
+          <button id="signOutBtn" class="hidden">Çıkış</button>
+        </div>
+        <button id="syncNowBtn" disabled>Şimdi senkronize et</button>
+      </div>
+      <div class="status" id="authStatus">Supabase kurulumu yapılmadı.</div>
+
+      <div class="divider"></div>
+      <h2>AI Radar</h2>
+      <div id="radarList" class="radar-list"><div class="empty">Tarama yapılmadı.</div></div>
+      <div class="status" id="radarStatus">Sekme açıkken 30 dakikada bir kontrol eder.</div>
+    </aside>
+  </div>
+
+  <div class="foot">
+    API anahtarları bu tarayıcıda saklanır. İzleme listesi, giriş yaptıktan sonra Supabase hesabındaki kullanıcı kimliğine bağlı olarak saklanır.
+    Radar yatırım tavsiyesi değildir.
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+
+const DEFAULTS=["SPY","QQQM","SMH","NVDA","ASML","TSM","PLTR"];
+const AI_UNIVERSE=["NVDA","AMD","AVGO","MRVL","ARM","TSM","ASML","MU","SMCI","PLTR","SNOW","DDOG","NET","CRWD","PATH","AI","SOUN","BBAI","VRT","ANET","DELL","HPE","ORCL","MSFT","GOOGL","AMZN","META","CEG","VST","NRG","GEV","ETN","PWR","OKLO","LEU"];
+const AI_TERMS=["artificial intelligence","generative ai","ai model","ai platform","ai infrastructure","data center","gpu","accelerator","inference","machine learning","copilot","hyperscaler","liquid cooling","nuclear power","power demand"];
+const POSITIVE_TERMS=["surge","record","beat","partnership","contract","launch","growth","upgrade","outperform","expands","wins","raises guidance","strong demand"];
+
+const $=id=>document.getElementById(id);
+let watchlist=JSON.parse(localStorage.getItem("watchlist")||"null")||DEFAULTS;
+let quotes={};
+let sbClient=null;
+let currentUser=null;
+let syncTimer=null;
+let realtimeChannel=null;
+let draggingIndex=null;
+
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]))}
+function fmt(n){return Number.isFinite(Number(n))?Number(n).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}):"—"}
+function marketKey(){return localStorage.getItem("finnhubKey")||""}
+function cloudConfig(){return {url:localStorage.getItem("supabaseUrl")||"",key:localStorage.getItem("supabaseKey")||""}}
+function persistLocal(){localStorage.setItem("watchlist",JSON.stringify(watchlist))}
+function setAuthStatus(msg,bad=false){$("authStatus").textContent=msg;$("authStatus").className="status "+(bad?"bad":"")}
+function setSyncBadge(online,text){$("syncDot").className="dot "+(online?"online":"");$("syncBadge").textContent=text}
+function normalized(list){return [...new Set((list||[]).map(x=>String(x).trim().toUpperCase()).filter(Boolean))]}
+
+function renderRows(){
+  $("watchBody").innerHTML=watchlist.map((s,i)=>{
+    const q=quotes[s],ch=q?.dp,cls=ch>0?"good":ch<0?"bad":"muted";
+    return `<tr data-index="${i}">
+      <td class="drag" data-drag="${i}" aria-label="${esc(s)} sırasını değiştir">≡</td>
+      <td class="symbol">${esc(s)}</td>
+      <td>${q?("$"+fmt(q.c)):"—"}</td>
+      <td class="${cls}">${q?((ch>=0?"+":"")+fmt(ch)+"%"):"—"}</td>
+      <td>${q?("$"+fmt(q.pc)):"—"}</td>
+      <td><div class="move-buttons"><button data-up="${i}" title="Yukarı">↑</button><button data-down="${i}" title="Aşağı">↓</button></div></td>
+      <td><button class="danger" data-remove="${esc(s)}" title="Çıkar">×</button></td>
+    </tr>`;
+  }).join("");
+
+  document.querySelectorAll("[data-remove]").forEach(b=>b.onclick=async()=>{
+    watchlist=watchlist.filter(s=>s!==b.dataset.remove);await afterListChange();
+  });
+  document.querySelectorAll("[data-up]").forEach(b=>b.onclick=()=>moveItem(Number(b.dataset.up),-1));
+  document.querySelectorAll("[data-down]").forEach(b=>b.onclick=()=>moveItem(Number(b.dataset.down),1));
+  setupPointerDrag();
+}
+renderRows();
+
+async function moveItem(index,delta){
+  const next=index+delta;if(next<0||next>=watchlist.length)return;
+  [watchlist[index],watchlist[next]]=[watchlist[next],watchlist[index]];
+  await afterListChange();
+}
+async function afterListChange(){
+  watchlist=normalized(watchlist);persistLocal();renderRows();scheduleCloudSave();
+}
+function addSymbol(){
+  const s=$("symbolInput").value.trim().toUpperCase().replace(/[^A-Z0-9.-]/g,"");
+  if(!s)return;if(!watchlist.includes(s))watchlist.unshift(s);
+  $("symbolInput").value="";afterListChange();
+}
+$("addBtn").onclick=addSymbol;
+$("symbolInput").addEventListener("keydown",e=>{if(e.key==="Enter")addSymbol()});
+
+function setupPointerDrag(){
+  document.querySelectorAll("[data-drag]").forEach(handle=>{
+    handle.onpointerdown=e=>{
+      draggingIndex=Number(handle.dataset.drag);
+      handle.setPointerCapture?.(e.pointerId);
+      document.querySelector(`tr[data-index="${draggingIndex}"]`)?.classList.add("dragging");
+      e.preventDefault();
+    };
+    handle.onpointermove=e=>{
+      if(draggingIndex===null)return;
+      const rows=[...document.querySelectorAll("#watchBody tr")];
+      const target=rows.findIndex(r=>{const x=r.getBoundingClientRect();return e.clientY>=x.top&&e.clientY<=x.bottom});
+      if(target>=0&&target!==draggingIndex){
+        const [item]=watchlist.splice(draggingIndex,1);watchlist.splice(target,0,item);
+        draggingIndex=target;renderRows();
+        document.querySelector(`tr[data-index="${draggingIndex}"]`)?.classList.add("dragging");
+      }
+      e.preventDefault();
+    };
+    const finish=async e=>{
+      if(draggingIndex===null)return;
+      draggingIndex=null;persistLocal();renderRows();scheduleCloudSave();e.preventDefault();
+    };
+    handle.onpointerup=finish;handle.onpointercancel=finish;
+  });
+}
+
+async function api(path){
+  if(!marketKey())throw new Error("Önce Finnhub API anahtarını kaydedin.");
+  const sep=path.includes("?")?"&":"?";
+  const r=await fetch(`https://finnhub.io/api/v1/${path}${sep}token=${encodeURIComponent(marketKey())}`);
+  if(!r.ok)throw new Error(`API hatası: ${r.status}`);return r.json();
+}
+async function refreshPrices(){
+  $("priceStatus").textContent="Fiyatlar alınıyor…";$("refreshBtn").disabled=true;
+  try{
+    const pairs=await Promise.all(watchlist.map(async s=>[s,await api(`quote?symbol=${encodeURIComponent(s)}`)]));
+    quotes=Object.fromEntries(pairs);renderRows();
+    $("priceStatus").textContent=`Son yenileme: ${new Date().toLocaleString("tr-TR")}`;
+  }catch(e){$("priceStatus").textContent=e.message}finally{$("refreshBtn").disabled=false}
+}
+$("refreshBtn").onclick=refreshPrices;
+$("apiKey").value=marketKey();
+$("saveKeyBtn").onclick=()=>{localStorage.setItem("finnhubKey",$("apiKey").value.trim());$("priceStatus").textContent="Finnhub anahtarı kaydedildi."};
+
+function initCloud(){
+  const {url,key}=cloudConfig();
+  $("supabaseUrl").value=url;$("supabaseKey").value=key;
+  if(!url||!key){sbClient=null;currentUser=null;setSyncBadge(false,"Yerel kullanım");setAuthStatus("Supabase adresi ve anahtarı gerekli.");return}
+  try{
+    sbClient=window.supabase.createClient(url,key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+    sbClient.auth.onAuthStateChange(async(_event,session)=>{await applySession(session)});
+    sbClient.auth.getSession().then(({data})=>applySession(data.session));
+  }catch(e){setAuthStatus("Bulut bağlantısı kurulamadı: "+e.message,true)}
+}
+async function applySession(session){
+  currentUser=session?.user||null;
+  $("signOutBtn").classList.toggle("hidden",!currentUser);
+  $("signInBtn").classList.toggle("hidden",!!currentUser);
+  $("signUpBtn").classList.toggle("hidden",!!currentUser);
+  $("syncNowBtn").disabled=!currentUser;
+  if(currentUser){
+    setSyncBadge(true,"Senkronizasyon açık");
+    setAuthStatus(`Giriş yapıldı: ${currentUser.email||"kullanıcı"}`);
+    await loadCloudList();
+    subscribeRealtime();
+  }else{
+    setSyncBadge(false,sbClient?"Giriş bekleniyor":"Yerel kullanım");
+    setAuthStatus(sbClient?"Senkronizasyon için giriş yapın.":"Supabase kurulumu yapılmadı.");
+    if(realtimeChannel){await sbClient?.removeChannel(realtimeChannel);realtimeChannel=null}
+  }
+}
+$("saveCloudBtn").onclick=()=>{
+  localStorage.setItem("supabaseUrl",$("supabaseUrl").value.trim().replace(/\/$/,""));
+  localStorage.setItem("supabaseKey",$("supabaseKey").value.trim());
+  setAuthStatus("Bulut ayarları kaydedildi. Bağlantı yenileniyor…");
+  initCloud();
+};
+$("signUpBtn").onclick=async()=>{
+  if(!sbClient)return setAuthStatus("Önce Supabase ayarlarını kaydedin.",true);
+  const email=$("email").value.trim(),password=$("password").value;
+  const {data,error}=await sbClient.auth.signUp({email,password});
+  if(error)return setAuthStatus(error.message,true);
+  setAuthStatus(data.session?"Hesap oluşturuldu ve giriş yapıldı.":"Hesap oluşturuldu. E-postadaki doğrulama bağlantısını açın.");
+};
+$("signInBtn").onclick=async()=>{
+  if(!sbClient)return setAuthStatus("Önce Supabase ayarlarını kaydedin.",true);
+  const {error}=await sbClient.auth.signInWithPassword({email:$("email").value.trim(),password:$("password").value});
+  if(error)setAuthStatus(error.message,true);
+};
+$("signOutBtn").onclick=async()=>{await sbClient?.auth.signOut()};
+$("syncNowBtn").onclick=async()=>{await saveCloudList(true)};
+
+async function loadCloudList(){
+  if(!sbClient||!currentUser)return;
+  const {data,error}=await sbClient.from("watchlists").select("symbols,updated_at").eq("user_id",currentUser.id).maybeSingle();
+  if(error){setAuthStatus("Liste okunamadı: "+error.message,true);return}
+  if(data?.symbols?.length){
+    watchlist=normalized(data.symbols);persistLocal();renderRows();
+    setAuthStatus(`Bulut listesi yüklendi · ${new Date(data.updated_at).toLocaleString("tr-TR")}`);
+  }else{
+    await saveCloudList(true);
+  }
+}
+function scheduleCloudSave(){
+  clearTimeout(syncTimer);
+  if(currentUser)syncTimer=setTimeout(()=>saveCloudList(false),600);
+}
+async function saveCloudList(manual=false){
+  if(!sbClient||!currentUser)return;
+  setSyncBadge(false,"Senkronize ediliyor");
+  const {error}=await sbClient.from("watchlists").upsert({
+    user_id:currentUser.id,symbols:watchlist,updated_at:new Date().toISOString()
+  },{onConflict:"user_id"});
+  if(error){setSyncBadge(false,"Senkronizasyon hatası");setAuthStatus(error.message,true);return}
+  setSyncBadge(true,"Senkronizasyon açık");
+  if(manual)setAuthStatus(`Liste senkronize edildi · ${new Date().toLocaleString("tr-TR")}`);
+}
+function subscribeRealtime(){
+  if(!sbClient||!currentUser)return;
+  if(realtimeChannel)sbClient.removeChannel(realtimeChannel);
+  realtimeChannel=sbClient.channel("watchlist-"+currentUser.id)
+    .on("postgres_changes",{event:"*",schema:"public",table:"watchlists",filter:`user_id=eq.${currentUser.id}`},
+      payload=>{
+        const incoming=payload.new?.symbols;
+        if(incoming){watchlist=normalized(incoming);persistLocal();renderRows();setAuthStatus("Liste diğer cihazdan güncellendi.")}
+      }).subscribe();
+}
+
+function dates(){const to=new Date(),from=new Date(Date.now()-3*86400000),f=d=>d.toISOString().slice(0,10);return{from:f(from),to:f(to)}}
+function newsScore(news,q){let score=0,matched=0;for(const n of news){const text=((n.headline||"")+" "+(n.summary||"")).toLowerCase();const hits=AI_TERMS.filter(t=>text.includes(t)).length;if(hits){matched++;score+=Math.min(12,hits*3)}score+=POSITIVE_TERMS.filter(t=>text.includes(t)).length}if(q?.dp>0)score+=Math.min(15,q.dp*1.3);if(q?.dp<0)score+=Math.max(-8,q.dp*.5);score+=Math.min(20,matched*4);return Math.round(score)}
+async function scanRadar(){
+  $("radarStatus").textContent="AI hisseleri taranıyor…";$("radarBtn").disabled=true;const {from,to}=dates();
+  try{
+    const cursor=Number(localStorage.getItem("radarCursor")||0);
+    const batch=[...AI_UNIVERSE.slice(cursor,cursor+12),...AI_UNIVERSE.slice(0,Math.max(0,cursor+12-AI_UNIVERSE.length))];
+    localStorage.setItem("radarCursor",String((cursor+12)%AI_UNIVERSE.length));const results=[];
+    for(const s of batch){try{const[q,news]=await Promise.all([api(`quote?symbol=${s}`),api(`company-news?symbol=${s}&from=${from}&to=${to}`)]);const relevant=(news||[]).filter(n=>{const t=((n.headline||"")+" "+(n.summary||"")).toLowerCase();return AI_TERMS.some(term=>t.includes(term))});const score=newsScore(relevant,q);if(relevant.length||q.dp>3)results.push({s,q,relevant,score})}catch(_){}}
+    results.sort((a,b)=>b.score-a.score);renderRadar(results.slice(0,6));
+    $("radarStatus").textContent=`Son tarama: ${new Date().toLocaleString("tr-TR")} · ${batch.length} aday incelendi`;
+    const hot=results.filter(x=>x.score>=18).slice(0,3);
+    if(hot.length&&Notification.permission==="granted")new Notification("AI Radar: dikkat çeken hisseler",{body:hot.map(x=>`${x.s} (${x.q.dp>=0?"+":""}${fmt(x.q.dp)}%)`).join(" · ")});
+  }catch(e){$("radarList").innerHTML=`<div class="empty">${esc(e.message)}</div>`;$("radarStatus").textContent="Tarama tamamlanamadı."}finally{$("radarBtn").disabled=false}
+}
+function renderRadar(items){
+  if(!items.length){$("radarList").innerHTML='<div class="empty">Bu taramada belirgin sinyal bulunmadı.</div>';return}
+  $("radarList").innerHTML=items.map(x=>{const n=x.relevant[0],cls=x.q.dp>=0?"good":"bad";return `<div class="radar-card"><div class="radar-top"><div><span class="symbol">${x.s}</span> <span class="${cls}">${x.q.dp>=0?"+":""}${fmt(x.q.dp)}%</span></div><span class="score">Skor ${x.score}</span></div><div class="headline">${n?esc(n.headline):"Fiyat momentumu dikkat çekiyor."}</div><div class="tiny">${x.relevant.length} ilgili haber · $${fmt(x.q.c)}</div></div>`}).join("")
+}
+$("radarBtn").onclick=scanRadar;
+$("notifyBtn").onclick=async()=>{if(!("Notification"in window))return alert("Bu tarayıcı bildirimleri desteklemiyor.");const p=await Notification.requestPermission();$("notifyBtn").textContent=p==="granted"?"Bildirimler açık":"Bildirim izni verilmedi"};
+setInterval(()=>{if(marketKey())scanRadar()},30*60*1000);
+
+window.addEventListener("error", e => {
+  const el = document.getElementById("authStatus");
+  if (el) {
+    el.textContent = "JavaScript hatası: " + (e.message || "Bilinmeyen hata");
+    el.className = "status bad";
+  }
+});
+
+if (!window.supabase) {
+  setAuthStatus("Supabase kütüphanesi yüklenemedi. İnternet bağlantısını kontrol edin ve sayfayı yenileyin.", true);
+} else {
+  initCloud();
+}
+</script>
+</body>
+</html>
