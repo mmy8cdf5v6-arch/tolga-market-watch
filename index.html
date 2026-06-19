@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b1020">
+<title>Tolga Market Watch</title>
+<style>
+:root{color-scheme:dark;--bg:#09101e;--panel:#121a2e;--panel2:#18223a;--line:#2a3654;--text:#f3f6ff;--muted:#9aa8c8;--accent:#74a9ff;--good:#48d58a;--bad:#ff6f7d}
+*{box-sizing:border-box} body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:linear-gradient(#08101d,#0c1426);color:var(--text);min-height:100vh}
+.wrap{max-width:1100px;margin:auto;padding:20px} header{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+h1{margin:0;font-size:clamp(25px,4vw,38px)} .sub{color:var(--muted);margin-top:5px}
+button,input{font:inherit} button{border:1px solid var(--line);background:var(--panel2);color:var(--text);padding:10px 14px;border-radius:11px;cursor:pointer}
+button:hover{filter:brightness(1.12)} .primary{background:var(--accent);color:#07101e;border:0;font-weight:800}
+.tabs{display:flex;gap:8px;margin-bottom:15px;overflow:auto}.tab{white-space:nowrap}.tab.active{background:var(--accent);color:#06101e;font-weight:800;border:0}
+.panel{background:rgba(18,26,46,.96);border:1px solid var(--line);border-radius:18px;padding:16px;box-shadow:0 14px 38px rgba(0,0,0,.24)}
+.toolbar{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:12px}.toolbar input{flex:1;min-width:180px;background:#0d1528;border:1px solid var(--line);color:var(--text);border-radius:10px;padding:11px 12px;text-transform:uppercase}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:12px 8px;border-bottom:1px solid var(--line)}th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.symbol{font-weight:850}.good{color:var(--good)}.bad{color:var(--bad)}.muted{color:var(--muted)}.drag{cursor:grab;color:var(--muted);font-size:18px}
+tr.dragging{opacity:.45}.status{font-size:13px;color:var(--muted);margin-top:12px}
+.radar{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}.card{background:#0d162b;border:1px solid var(--line);border-radius:14px;padding:14px}
+.cardtop{display:flex;justify-content:space-between;gap:10px}.score{background:#203050;border-radius:999px;padding:4px 8px;font-size:12px;font-weight:800}.headline{margin-top:10px;line-height:1.4}
+.help{color:var(--muted);line-height:1.55}.hidden{display:none}
+@media(max-width:700px){.wrap{padding:12px}.panel{padding:12px}th:nth-child(4),td:nth-child(4){display:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div><h1>Tolga Market Watch</h1><div class="sub">ABD hisseleri, ETF'ler ve AI Radar</div></div>
+  <button id="refreshBtn" class="primary">↻ Fiyatları yenile</button>
+</header>
+
+<div class="tabs">
+  <button class="tab active" data-tab="stocks">Hisseler</button>
+  <button class="tab" data-tab="etfs">ETF'ler</button>
+  <button class="tab" data-tab="radar">AI Radar</button>
+  <button class="tab" data-tab="about">Bilgi</button>
+</div>
+
+<section id="stocks" class="panel view">
+  <div class="toolbar"><input id="stockInput" placeholder="Örn. NVDA"><button data-add="stocks">Hisse ekle</button></div>
+  <div style="overflow:auto"><table><thead><tr><th></th><th>Sembol</th><th>Fiyat</th><th>Günlük</th><th></th></tr></thead><tbody id="stocksBody"></tbody></table></div>
+  <div class="status" id="stocksStatus">Henüz yenilenmedi.</div>
+</section>
+
+<section id="etfs" class="panel view hidden">
+  <div class="toolbar"><input id="etfInput" placeholder="Örn. SMH"><button data-add="etfs">ETF ekle</button></div>
+  <div style="overflow:auto"><table><thead><tr><th></th><th>Sembol</th><th>Fiyat</th><th>Günlük</th><th></th></tr></thead><tbody id="etfsBody"></tbody></table></div>
+  <div class="status" id="etfsStatus">Henüz yenilenmedi.</div>
+</section>
+
+<section id="radar" class="panel view hidden">
+  <div class="toolbar"><button id="radarBtn">AI Radar'ı tara</button></div>
+  <div id="radarGrid" class="radar"><div class="help">Radar henüz çalıştırılmadı.</div></div>
+  <div class="status" id="radarStatus">AI ile ilişkili adaylar haber ve momentum açısından taranır.</div>
+</section>
+
+<section id="about" class="panel view hidden">
+  <div class="help">
+    <h2>Nasıl kullanılır?</h2>
+    <p>Hisse ve ETF sembollerini ekleyip çıkarabilirsin. Satırın solundaki tutamaçtan sürükleyerek sıralamayı değiştirebilirsin. Liste ve sıralama bu tarayıcıda otomatik kaydedilir.</p>
+    <p>Fiyatlar ücretsiz piyasa veri uç noktalarından alınır ve zaman zaman gecikmeli olabilir. AI Radar yatırım tavsiyesi değildir.</p>
+  </div>
+</section>
+</div>
+
+<script>
+const defaults={stocks:["NVDA","ASML","TSM","PLTR","AMD"],etfs:["SPY","QQQM","SMH"]};
+let lists=JSON.parse(localStorage.getItem("tmw_lists")||"null")||defaults;
+let quotes={};
+const $=id=>document.getElementById(id);
+const save=()=>localStorage.setItem("tmw_lists",JSON.stringify(lists));
+const esc=s=>String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]));
+const fmt=n=>Number.isFinite(n)?n.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}):"—";
+
+function render(type){
+  const body=$(type+"Body");
+  body.innerHTML=lists[type].map(s=>{
+    const q=quotes[s], ch=q?.changePercent, cls=ch>0?"good":ch<0?"bad":"muted";
+    return `<tr draggable="true" data-symbol="${esc(s)}" data-type="${type}">
+      <td class="drag">☰</td><td class="symbol">${esc(s)}</td>
+      <td>${q?"$"+fmt(q.price):"—"}</td>
+      <td class="${cls}">${q?(ch>=0?"+":"")+fmt(ch)+"%":"—"}</td>
+      <td><button data-remove="${esc(s)}" data-type="${type}">×</button></td>
+    </tr>`;
+  }).join("");
+
+  body.querySelectorAll("[data-remove]").forEach(b=>b.onclick=()=>{
+    lists[b.dataset.type]=lists[b.dataset.type].filter(x=>x!==b.dataset.remove);save();render(b.dataset.type);
+  });
+  enableDrag(body,type);
+}
+render("stocks");render("etfs");
+
+function enableDrag(body,type){
+  let dragged=null;
+  body.querySelectorAll("tr").forEach(row=>{
+    row.addEventListener("dragstart",()=>{dragged=row;row.classList.add("dragging")});
+    row.addEventListener("dragend",()=>{row.classList.remove("dragging");dragged=null;
+      lists[type]=[...body.querySelectorAll("tr")].map(r=>r.dataset.symbol);save();
+    });
+    row.addEventListener("dragover",e=>{
+      e.preventDefault(); if(!dragged||dragged===row)return;
+      const rect=row.getBoundingClientRect();
+      body.insertBefore(dragged,e.clientY<rect.top+rect.height/2?row:row.nextSibling);
+    });
+  });
+}
+
+document.querySelectorAll("[data-add]").forEach(btn=>btn.onclick=()=>{
+  const type=btn.dataset.add, input=$(type==="stocks"?"stockInput":"etfInput");
+  const s=input.value.trim().toUpperCase().replace(/[^A-Z0-9.-]/g,"");
+  if(s&&!lists[type].includes(s))lists[type].push(s);
+  input.value="";save();render(type);
+});
+
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+  document.querySelectorAll(".view").forEach(x=>x.classList.add("hidden"));
+  t.classList.add("active");$(t.dataset.tab).classList.remove("hidden");
+});
+
+async function refresh(){
+  const symbols=[...new Set([...lists.stocks,...lists.etfs])];
+  $("refreshBtn").disabled=true;$("stocksStatus").textContent="Fiyatlar alınıyor…";$("etfsStatus").textContent="Fiyatlar alınıyor…";
+  try{
+    const r=await fetch("/api/quotes?symbols="+encodeURIComponent(symbols.join(",")));
+    const data=await r.json(); if(!r.ok)throw new Error(data.error||"Veri alınamadı");
+    quotes=data.quotes||{};render("stocks");render("etfs");
+    const stamp="Son yenileme: "+new Date().toLocaleString("tr-TR");
+    $("stocksStatus").textContent=stamp;$("etfsStatus").textContent=stamp;
+  }catch(e){$("stocksStatus").textContent=e.message;$("etfsStatus").textContent=e.message}
+  finally{$("refreshBtn").disabled=false}
+}
+$("refreshBtn").onclick=refresh;
+
+$("radarBtn").onclick=async()=>{
+  $("radarBtn").disabled=true;$("radarStatus").textContent="Tarama yapılıyor…";
+  try{
+    const r=await fetch("/api/radar");const data=await r.json();if(!r.ok)throw new Error(data.error||"Radar çalışmadı");
+    $("radarGrid").innerHTML=data.items.map(x=>`<div class="card"><div class="cardtop"><b>${esc(x.symbol)}</b><span class="score">Skor ${x.score}</span></div><div class="${x.changePercent>=0?"good":"bad"}">${x.changePercent>=0?"+":""}${fmt(x.changePercent)}%</div><div class="headline">${esc(x.reason)}</div></div>`).join("")||'<div class="help">Belirgin aday bulunamadı.</div>';
+    $("radarStatus").textContent="Son tarama: "+new Date().toLocaleString("tr-TR");
+  }catch(e){$("radarStatus").textContent=e.message}
+  finally{$("radarBtn").disabled=false}
+};
+refresh();
+</script>
+</body>
+</html>
