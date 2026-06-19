@@ -47,7 +47,7 @@
 <div class="wrap">
   <header>
     <div>
-      <h1>ABD Piyasa İzleyici</h1>
+      <h1>ABD Piyasa İzleyici <span style="font-size:13px;color:#98a6c7">v2.1</span></h1>
       <div class="sub">Cihazlar arası senkronizasyon + iPad uyumlu sıralama</div>
     </div>
     <div class="actions">
@@ -122,8 +122,8 @@
   </div>
 </div>
 
-<script type="module">
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
 
 const DEFAULTS=["SPY","QQQM","SMH","NVDA","ASML","TSM","PLTR"];
 const AI_UNIVERSE=["NVDA","AMD","AVGO","MRVL","ARM","TSM","ASML","MU","SMCI","PLTR","SNOW","DDOG","NET","CRWD","PATH","AI","SOUN","BBAI","VRT","ANET","DELL","HPE","ORCL","MSFT","GOOGL","AMZN","META","CEG","VST","NRG","GEV","ETN","PWR","OKLO","LEU"];
@@ -133,7 +133,7 @@ const POSITIVE_TERMS=["surge","record","beat","partnership","contract","launch",
 const $=id=>document.getElementById(id);
 let watchlist=JSON.parse(localStorage.getItem("watchlist")||"null")||DEFAULTS;
 let quotes={};
-let supabase=null;
+let sbClient=null;
 let currentUser=null;
 let syncTimer=null;
 let realtimeChannel=null;
@@ -235,11 +235,11 @@ $("saveKeyBtn").onclick=()=>{localStorage.setItem("finnhubKey",$("apiKey").value
 function initCloud(){
   const {url,key}=cloudConfig();
   $("supabaseUrl").value=url;$("supabaseKey").value=key;
-  if(!url||!key){supabase=null;currentUser=null;setSyncBadge(false,"Yerel kullanım");setAuthStatus("Supabase adresi ve anahtarı gerekli.");return}
+  if(!url||!key){sbClient=null;currentUser=null;setSyncBadge(false,"Yerel kullanım");setAuthStatus("Supabase adresi ve anahtarı gerekli.");return}
   try{
-    supabase=createClient(url,key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
-    supabase.auth.onAuthStateChange(async(_event,session)=>{await applySession(session)});
-    supabase.auth.getSession().then(({data})=>applySession(data.session));
+    sbClient=window.supabase.createClient(url,key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+    sbClient.auth.onAuthStateChange(async(_event,session)=>{await applySession(session)});
+    sbClient.auth.getSession().then(({data})=>applySession(data.session));
   }catch(e){setAuthStatus("Bulut bağlantısı kurulamadı: "+e.message,true)}
 }
 async function applySession(session){
@@ -254,9 +254,9 @@ async function applySession(session){
     await loadCloudList();
     subscribeRealtime();
   }else{
-    setSyncBadge(false,supabase?"Giriş bekleniyor":"Yerel kullanım");
-    setAuthStatus(supabase?"Senkronizasyon için giriş yapın.":"Supabase kurulumu yapılmadı.");
-    if(realtimeChannel){await supabase?.removeChannel(realtimeChannel);realtimeChannel=null}
+    setSyncBadge(false,sbClient?"Giriş bekleniyor":"Yerel kullanım");
+    setAuthStatus(sbClient?"Senkronizasyon için giriş yapın.":"Supabase kurulumu yapılmadı.");
+    if(realtimeChannel){await sbClient?.removeChannel(realtimeChannel);realtimeChannel=null}
   }
 }
 $("saveCloudBtn").onclick=()=>{
@@ -266,23 +266,23 @@ $("saveCloudBtn").onclick=()=>{
   initCloud();
 };
 $("signUpBtn").onclick=async()=>{
-  if(!supabase)return setAuthStatus("Önce Supabase ayarlarını kaydedin.",true);
+  if(!sbClient)return setAuthStatus("Önce Supabase ayarlarını kaydedin.",true);
   const email=$("email").value.trim(),password=$("password").value;
-  const {data,error}=await supabase.auth.signUp({email,password});
+  const {data,error}=await sbClient.auth.signUp({email,password});
   if(error)return setAuthStatus(error.message,true);
   setAuthStatus(data.session?"Hesap oluşturuldu ve giriş yapıldı.":"Hesap oluşturuldu. E-postadaki doğrulama bağlantısını açın.");
 };
 $("signInBtn").onclick=async()=>{
-  if(!supabase)return setAuthStatus("Önce Supabase ayarlarını kaydedin.",true);
-  const {error}=await supabase.auth.signInWithPassword({email:$("email").value.trim(),password:$("password").value});
+  if(!sbClient)return setAuthStatus("Önce Supabase ayarlarını kaydedin.",true);
+  const {error}=await sbClient.auth.signInWithPassword({email:$("email").value.trim(),password:$("password").value});
   if(error)setAuthStatus(error.message,true);
 };
-$("signOutBtn").onclick=async()=>{await supabase?.auth.signOut()};
+$("signOutBtn").onclick=async()=>{await sbClient?.auth.signOut()};
 $("syncNowBtn").onclick=async()=>{await saveCloudList(true)};
 
 async function loadCloudList(){
-  if(!supabase||!currentUser)return;
-  const {data,error}=await supabase.from("watchlists").select("symbols,updated_at").eq("user_id",currentUser.id).maybeSingle();
+  if(!sbClient||!currentUser)return;
+  const {data,error}=await sbClient.from("watchlists").select("symbols,updated_at").eq("user_id",currentUser.id).maybeSingle();
   if(error){setAuthStatus("Liste okunamadı: "+error.message,true);return}
   if(data?.symbols?.length){
     watchlist=normalized(data.symbols);persistLocal();renderRows();
@@ -296,9 +296,9 @@ function scheduleCloudSave(){
   if(currentUser)syncTimer=setTimeout(()=>saveCloudList(false),600);
 }
 async function saveCloudList(manual=false){
-  if(!supabase||!currentUser)return;
+  if(!sbClient||!currentUser)return;
   setSyncBadge(false,"Senkronize ediliyor");
-  const {error}=await supabase.from("watchlists").upsert({
+  const {error}=await sbClient.from("watchlists").upsert({
     user_id:currentUser.id,symbols:watchlist,updated_at:new Date().toISOString()
   },{onConflict:"user_id"});
   if(error){setSyncBadge(false,"Senkronizasyon hatası");setAuthStatus(error.message,true);return}
@@ -306,9 +306,9 @@ async function saveCloudList(manual=false){
   if(manual)setAuthStatus(`Liste senkronize edildi · ${new Date().toLocaleString("tr-TR")}`);
 }
 function subscribeRealtime(){
-  if(!supabase||!currentUser)return;
-  if(realtimeChannel)supabase.removeChannel(realtimeChannel);
-  realtimeChannel=supabase.channel("watchlist-"+currentUser.id)
+  if(!sbClient||!currentUser)return;
+  if(realtimeChannel)sbClient.removeChannel(realtimeChannel);
+  realtimeChannel=sbClient.channel("watchlist-"+currentUser.id)
     .on("postgres_changes",{event:"*",schema:"public",table:"watchlists",filter:`user_id=eq.${currentUser.id}`},
       payload=>{
         const incoming=payload.new?.symbols;
@@ -338,7 +338,20 @@ function renderRadar(items){
 $("radarBtn").onclick=scanRadar;
 $("notifyBtn").onclick=async()=>{if(!("Notification"in window))return alert("Bu tarayıcı bildirimleri desteklemiyor.");const p=await Notification.requestPermission();$("notifyBtn").textContent=p==="granted"?"Bildirimler açık":"Bildirim izni verilmedi"};
 setInterval(()=>{if(marketKey())scanRadar()},30*60*1000);
-initCloud();
+
+window.addEventListener("error", e => {
+  const el = document.getElementById("authStatus");
+  if (el) {
+    el.textContent = "JavaScript hatası: " + (e.message || "Bilinmeyen hata");
+    el.className = "status bad";
+  }
+});
+
+if (!window.supabase) {
+  setAuthStatus("Supabase kütüphanesi yüklenemedi. İnternet bağlantısını kontrol edin ve sayfayı yenileyin.", true);
+} else {
+  initCloud();
+}
 </script>
 </body>
 </html>
